@@ -1,0 +1,19 @@
+chezmoi: chezmoi version v2.70.3, built at 2026-05-07T21:09:34Z
+git: git version 2.54.0
+gh: gh version 2.92.0 (2026-04-28)
+nvim: NVIM v0.12.2
+zsh: zsh 5.9 (x86_64-pc-linux-gnu)
+kitty: kitty 0.46.2 created by Kovid Goyal
+hyprctl: usage: hyprctl [flags] <command> [args...|--help]
+hyprsunset: hyprsunset v0.3.3
+waybar: Waybar v0.15.0
+node: v26.1.0
+npm: 11.14.1
+pnpm: 10.33.0
+python: Python 3.14.4
+python3: Python 3.14.4
+cargo: cargo 1.93.1 (083ac5135 2025-12-15)
+rustc: rustc 1.93.1 (01f6ddf75 2026-02-11)
+go: flag provided but not defined: -version
+docker: Docker version 29.4.3, build 055a478ea9
+docker-compose: Docker Compose version 5.1.3

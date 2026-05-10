@@ -1,0 +1,8 @@
+# nvim temp/state
+swap/
+backup/
+undo/
+# packer compiled file (if you ever used packer)
+plugin/packer_compiled.lua
+# logs
+*.log

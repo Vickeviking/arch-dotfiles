@@ -1,0 +1,17 @@
+anki-bin
+bridge-utils
+google-chrome
+gtk-engine-murrine
+logisim-evolution
+matlab-mpm
+minecraft-launcher
+openai-codex-bin
+pokemon-colorscripts-git
+spotify
+stgit
+ttf-victor-mono
+visual-studio-code-bin
+wallust
+wlogout
+yay
+yay-debug

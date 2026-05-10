@@ -1,0 +1,11 @@
+## Working version
+
+NVIM v0.11.4
+Build type: RelWithDebInfo
+LuaJIT 2.1.1753364724
+Run "nvim -V1 -v" for more info
+
+## Required system installations
+
+cargo-nextest for neotest
+laxzygit for lazygit

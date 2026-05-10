@@ -1,0 +1,6 @@
+# Local/generated directories that should not be managed if broad adds are used later.
+.config/nvim/.git/
+.config/nvim/node_modules/
+.config/hypr/.git/
+.config/hypr/scripts/__pycache__/
+.config/hypr/.initial_startup_done
