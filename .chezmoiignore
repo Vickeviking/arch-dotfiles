@@ -1,4 +1,5 @@
 # Local/generated directories that should not be managed if broad adds are used later.
+README.md
 .config/nvim/.git/
 .config/nvim/node_modules/
 .config/hypr/.git/
