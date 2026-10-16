@@ -100,8 +100,8 @@ Phases:
 - [x] 1. Skeleton in `~/dev/project/Watchtower`: layer-shell overlay on the focused monitor, 10 tabs, live desk-theme colors, Super+Space toggle (resident, ~20 ms reopen), j/k 1–0 gg G f ? Esc, live Home cards, 8 tests. Committed (`ee69826`), on both machines. 2026-10-16
 - [ ] 1b. Polish: regenerate tab art in the photo style; `ttf-ibm-plex` for the intended font; autostart with `exec-once` (Viktor decides).
 - [x] 2. System + Processes (collector thread, never wakes a sleeping NVIDIA GPU, 0.15 % CPU while hidden). 2026-10-16
-- [x] 3. Settings: Wi-Fi, Bluetooth, sound, displays, brightness, theme, DND, keyboard, power, updates. [ ] Privacy and Startup sections. [ ] Waybar Wi-Fi/Bluetooth clicks → `watchtower --tab settings`, then drop nm-applet + blueman on the ThinkPad. 2026-10-16
-- [~] 4. Machines (tailnet + ping + SSH) and Atlas (live `ss` connections on a cairo globe, offline DB-IP lite in `~/.local/share/watchtower/`, physics check flags CDN/anycast, `t` tracepath route) done. [ ] `watchtower-agent` for per-machine detail. [ ] Refresh the GeoIP DB monthly. 2026-10-16
+- [x] 3. Settings: Wi-Fi, Bluetooth, sound, displays, brightness, theme, DND, keyboard, power, updates, Privacy, Startup. [x] Privacy and Startup sections (2026-10-16). [ ] Waybar Wi-Fi/Bluetooth clicks → `watchtower --tab settings`, then drop nm-applet + blueman on the ThinkPad. 2026-10-16
+- [~] 4. Machines (tailnet + ping + SSH) and Atlas (live `ss` connections on a cairo globe, offline DB-IP lite in `~/.local/share/watchtower/`, physics check flags CDN/anycast, `t` tracepath route) done. [ ] `watchtower-agent` for per-machine detail. [x] GeoIP refresh is one key in Settings → Atlas (do it monthly). 2026-10-16
 - [x] 5. Manuals (man + offline Arch wiki + std search, Rust/embedded/Linux shelf, man page of the day, `r` random), Keybinds (live from hyprctl), Ask (Claude Haiku read-only or local Ollama; ThinkPad has no Ollama), Toolbox (listening ports, own-machine port check, latency, DNS, TLS). 2026-10-16
 - [ ] 6. Network Observatory modes, in the build order above.
 - Note: an untracked `crates/wt` (network toolkit start) sits in the Watchtower repo from a parallel run; Viktor decides keep or trash.
@@ -148,6 +148,8 @@ Phases:
 
 - 2026-10-16 Done: nvim-style navigation, OnDemand keyboard (no lock-out), machine detail views over SSH, compact ThinkPad layout. Open: ThinkPad's SSH key isn't on gunnar (Viktor: `ssh-copy-id vango@gunnar` from the ThinkPad if wanted); the desktop has no sshd, so the ThinkPad can't read it (backups plan covers that).
 - 2026-10-16 Viktor: Watchtower navigation like nvim windows. Ctrl+h / Ctrl+l move between the menu and the view. In the menu j/k change tab; in the view j/k scroll AND step through every clickable thing (cards, rows, buttons), Enter clicks it. Same keys everywhere.
+
+- 2026-10-16 Health check: desktop can free ~280 GB (Arcturon cargo-target 186 GB + worktrees 40 GB, pacman cache 58 GB reclaimable, Spotify cache 22 GB, journal 3.9 GB, 46 orphans). Watchtower System → Housekeeping shows it live. Broken: `planner-watcher` (~/planner gone), `school-sync` (SEPM repo on detached commit 6b61b4e). Fixed: ThinkPad desk-wallpaper boot race. Viktor: "lägg till 1 och 5, synca, sen är vi nöjda" → done.
 
 ## Decisions
 - 2026-10-16 Desktop stays dual boot with Windows 11 (own disk, own ESP).
