@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# desk-theme hook → Arcturon follows the desk (Arcturon T-1437, ADR-0089 §4).
+# Sets the account's ui_theme to the desk palette's slug; Arcturon's five
+# themes use desk-theme's own names, so the name passes straight through.
+#
+# Config: ~/.config/desk/arcturon.env (chmod 600, never in chezmoi):
+#   ARCTURON_URL=https://arcturon.dev
+#   ARCTURON_TOKEN=arcpat_…     # Settings → API-tokens, scope: write
+# Without it this hook does nothing.
+set -u
+name="${1:-}"
+conf="$HOME/.config/desk/arcturon.env"
+[ -r "$conf" ] || exit 0
+# shellcheck disable=SC1090
+. "$conf"
+[ -n "${ARCTURON_URL:-}" ] && [ -n "${ARCTURON_TOKEN:-}" ] || exit 0
+case "$name" in
+  rain-city|neon-rain|tokyo-night|rose-pine-moon|gruvbox-warm) ;;
+  *) exit 0 ;;   # 'wallpaper' and anything Arcturon has no palette for
+esac
+code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 \
+  -X PATCH "$ARCTURON_URL/api/v1/app/arc/preferences" \
+  -H "Authorization: Bearer $ARCTURON_TOKEN" \
+  -H 'Content-Type: application/json' \
+  --data "{\"ui_theme\":\"$name\"}" 2>/dev/null) || code=000
+case "$code" in
+  2??) ;;
+  401|403) notify-send -a desk-theme "Arcturon följde inte temat" "Token avvisad ($code) — skapa en ny under Inställningar → API-tokens." ;;
+  *) notify-send -a desk-theme "Arcturon följde inte temat" "Svar $code från $ARCTURON_URL" ;;
+esac

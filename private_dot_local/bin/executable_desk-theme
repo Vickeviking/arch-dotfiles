@@ -9,6 +9,9 @@
 
 Writes ~/.config/themes/current/{colors.css,colors.rasi,colors.lua,hyprlock.conf,kitty.conf,name}
 and ~/.claude/themes/desk.json, then reloads the running apps.
+
+After a switch, every executable in ~/.config/themes/hooks.d/ runs detached with
+the theme name as its argument (e.g. hooks.d/arcturon tells Arcturon to follow).
 """
 import glob, json, os, re, subprocess, sys, time
 
@@ -223,12 +226,25 @@ def reload_apps():
         quiet("nvim", "--server", sock, "--remote-send", "<Cmd>colorscheme desk<CR>")
 
 
+def run_hooks(name):
+    """Fire-and-forget: a slow or offline hook must never hold up the switch."""
+    hooks = os.path.join(BASE, "hooks.d")
+    for hook in sorted(glob.glob(os.path.join(hooks, "*"))):
+        if os.path.isfile(hook) and os.access(hook, os.X_OK):
+            try:
+                subprocess.Popen([hook, name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 start_new_session=True)
+            except OSError:
+                pass
+
+
 def switch(name, switch_wallpaper=True):
     if name not in names():
         sys.exit(f"desk-theme: unknown theme '{name}'. Available: {', '.join(names())}")
     p = load(name)
     render(name, p)
     reload_apps()
+    run_hooks(name)
     print(f"desk-theme: {p['name']} active")
     if switch_wallpaper:   # bring the theme's wallpaper of the day (themes without a folder keep theirs)
         quiet(os.path.join(HOME, ".local/bin/desk-wallpaper"), timeout=30)
