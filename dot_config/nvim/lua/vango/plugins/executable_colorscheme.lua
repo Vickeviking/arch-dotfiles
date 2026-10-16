@@ -1,28 +1,18 @@
+-- Colors follow desk-theme: `colors/desk.lua` reads ~/.config/themes/current/nvim.lua
+-- (switch with `desk-theme <name>`, Super+Shift+T or /desk-theme; open nvims recolor live).
+-- gruvbox stays installed as the fallback if the palette file is missing.
 return {
 	"morhetz/gruvbox",
 	priority = 1000,
 	config = function()
-		local function apply_surface_highlights()
-			local set_hl = vim.api.nvim_set_hl
-
-			set_hl(0, "NormalFloat", { fg = "#ebdbb2", bg = "#282828" })
-			set_hl(0, "FloatBorder", { fg = "#928374", bg = "#282828" })
-			set_hl(0, "Pmenu", { fg = "#ebdbb2", bg = "#282828" })
-			set_hl(0, "PmenuSel", { fg = "#282828", bg = "#fabd2f", bold = true })
-		end
-
-		vim.g.gruvbox_contrast_dark = "hard"
-		vim.cmd("colorscheme gruvbox")
-
 		vim.opt.winblend = 0
 		vim.opt.pumblend = 0
 
-		vim.api.nvim_create_autocmd("ColorScheme", {
-			group = vim.api.nvim_create_augroup("VangoGruvboxSurface", { clear = true }),
-			pattern = "gruvbox",
-			callback = apply_surface_highlights,
-		})
-
-		apply_surface_highlights()
+		if vim.fn.filereadable(vim.fn.expand("~/.config/themes/current/nvim.lua")) == 1 then
+			vim.cmd("colorscheme desk")
+		else
+			vim.g.gruvbox_contrast_dark = "hard"
+			vim.cmd("colorscheme gruvbox")
+		end
 	end,
 }
