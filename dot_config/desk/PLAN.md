@@ -77,6 +77,18 @@ Tabs:
 - [ ] **Network → Home map**: devices on the LAN, new-device alerts, open ports on your own devices.
 - [ ] **Network → Packet inspector**: live capture + protocol decode of own traffic (tshark engine; one-time root setup by Viktor: `wireshark` group / capabilities).
 - [ ] **Network → Wi-Fi radio**: nearby networks, channels, signal over time, interference.
+- [ ] **Network Observatory** (2026-10-16, ideas from Viktor + ChatGPT brainstorm). One event model shared by every mode:
+  - **Galaxy**: live topology, devices as nodes, traffic as particle flows (thicker = more bandwidth), latency spikes ripple, new devices materialize as unknown nodes, scrub/replay history. Starts with **Viktor's own fleet** via a `lantern-agent` (Rust) on desktop, ThinkPad, Pi (`gunnar`) and the 4th machine over Tailscale: per-process traffic, inter-node latency, CPU/temps.
+  - **Recon / Device Hunter**: inventory from router clients, DHCP, ARP/IPv6 neighbours; first/last seen, IP/MAC changes; scoped scans of own devices only.
+  - **Exposure**: open services, TLS health, plaintext protocols, Wi-Fi security, router hygiene; each finding with evidence, confidence, severity, fix.
+  - **Radio**: nearby access points, channels, signal timelines, channel congestion, BLE (monitor mode only with suitable hardware).
+  - **Forensics**: packet autopsy (tshark), DNS analysis, TLS Lab on own test sessions, Time Machine replay, Sankey (device → protocol → destination).
+  - **Latency Autopsy**: gateway vs internet latency, loss/jitter, DNS vs connect time, bufferbloat (idle vs loaded).
+  - Build order: Galaxy (own fleet) → Latency Autopsy → Device Hunter → DNS Observatory → Sankey + Time Machine → Forensics/TLS Lab.
+  - Stack: Lantern native (Rust/GTK) + Galaxy as WebGL inside Lantern (WebKitGTK), fed by the Rust collector; SQLite first, Postgres/Timescale if history outgrows it. Privileged capture lives in a small, narrowly scoped service; the UI and Claude never get blanket root.
+  - Limits: HTTPS hides search terms, URLs and contents even from the router owner; no interception of other people's encrypted traffic.
+  - [?] What is the 4th machine ("mycomputer")?
+- [ ] **DNS on the Pi**: AdGuard Home on `gunnar` for the DNS Observatory + house-wide ad-block; keep it light, the Pi runs Arcturon production.
 - [ ] **Network → Router** (Viktor has the admin password, 2026-10-16): device list, traffic and logs from the router itself; feed Lantern's Home map. If the model supports OpenWrt: per-device stats, house-wide ad-block, SQM, WireGuard home VPN (Viktor flashes it himself).
 - [?] Router brand + model? (sticker underneath)
 - [ ] Talk with Li before anything shows per-device detail for her devices.
@@ -123,8 +135,11 @@ Phases:
 - [ ] Clean-up, refactoring, tests, scaling review, documentation.
 
 ## Inbox
-- 2026-10-16 **Image generation for the desk**: per-theme wallpapers, Lantern icons/illustrations, SDDM/plymouth art. Options: API key (Viktor stores it himself in `~/.config/desk/image-api.env`, mode 600, never in chat, kept out of chezmoi) and/or local Flux/SDXL in the existing ComfyUI container on the desktop GPU.
-  - [?] Which provider / local first?
+- 2026-10-16 **Image generation**: `desk-imagine "prompt" -o file.png` (OpenAI Images, key in `~/.config/desk/image-api.env`, mode 600, ignored by chezmoi). Key expires 2026-10-17; ~$3.50 credit. Revoke it at platform.openai.com when done (it was pasted in chat).
+  - [x] Wallpapers for neon-rain, tokyo-night, rose-pine-moon, gruvbox-warm + Lantern icon in `~/Pictures/wallpapers/desk/`. 2026-10-16
+  - [ ] `desk-theme` switches the wallpaper with the palette (toggle); trim the icon's white corners.
+  - [ ] Wallpapers are 1536×1024: upscale for the 4K monitor or regenerate larger if they look soft.
+  - [ ] Still to make while the credit lasts: SDDM/plymouth art, Lantern tab illustrations.
 
 ## Decisions
 - 2026-10-15 Security: sensible, not paranoid; nothing that can lock Viktor out.
