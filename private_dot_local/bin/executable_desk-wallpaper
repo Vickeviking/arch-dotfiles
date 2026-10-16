@@ -49,7 +49,21 @@ esac
 # shellcheck source=/dev/null
 source "$SCRIPTSDIR/WallpaperBackend.sh"
 wallpaper_start_daemon
-wallpaper_img "$pick" --transition-type fade --transition-duration 1.2 --transition-fps 60
+
+# Each monitor gets a center crop at its own aspect ratio (crop only, never stretched),
+# cached in ~/.cache/desk-wallpaper.
+CACHE="$HOME/.cache/desk-wallpaper"; mkdir -p "$CACHE"
+read -r src_w src_h <<< "$(magick identify -format '%w %h' "$pick")"
+while read -r mon mw mh; do
+    read -r cw ch < <(python3 -I -c "
+sw, sh, mw, mh = $src_w, $src_h, $mw, $mh
+t = mw / mh
+cw, ch = (round(sh * t), sh) if sw / sh > t else (sw, round(sw / t))
+print(cw, ch)")
+    out="$CACHE/$(basename "${pick%.*}")-${cw}x${ch}.png"
+    [[ -f $out ]] || magick "$pick" -gravity center -crop "${cw}x${ch}+0+0" +repage "$out"
+    wallpaper_img -o "$mon" "$out" --transition-type fade --transition-duration 1.2 --transition-fps 60
+done < <(hyprctl monitors -j | python3 -I -c "import json,sys; [print(m['name'], m['width'], m['height']) for m in json.load(sys.stdin)]")
 "$SCRIPTSDIR/WallustSwww.sh" "$pick" >/dev/null 2>&1 || true   # keeps lock screen / wallust cache in sync
 "$HOME/.local/bin/desk-theme" --refresh >/dev/null 2>&1 || true  # only acts in 'wallpaper' theme mode
 

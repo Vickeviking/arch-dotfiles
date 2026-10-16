@@ -137,7 +137,17 @@ Phases:
 ## Inbox
 - 2026-10-16 **Image generation**: `desk-imagine "prompt" -o file.png` (OpenAI Images, key in `~/.config/desk/image-api.env`, mode 600, ignored by chezmoi). Key expires 2026-10-17; ~$3.50 credit. Revoke it at platform.openai.com when done (it was pasted in chat).
   - [x] Wallpapers for neon-rain, tokyo-night, rose-pine-moon, gruvbox-warm + Lantern icon in `~/Pictures/wallpapers/desk/`. 2026-10-16
-  - [x] 5 Rain-city wallpapers (street, alley, window, train, tram stop) in `~/Pictures/wallpapers/desk/rain-city/`; icon moved to `~/Pictures/desk-art/` (out of KooL's random-wallpaper path). 2026-10-16
+  - [x] Art direction (Viktor 2026-10-16): **dark, night, orange lights, crisp high quality; photo + cinematic-render mix; not painted, not always rain; only Rain-city gets new art.** Model `gpt-image-2.5-flare` at 3840×2160 (pixel cap), cropped per screen, never stretched.
+  - [x] Rain-city set v2 (6): alley photo, street render, rooftop photo, platform render, desk photo, harbor render. Painted v1 set trashed. 2026-10-16
+  - [x] `desk-wallpaper` crops per monitor aspect (laptop 16:10 → 3456×2160, 4K → 3840×2160), cached in `~/.cache/desk-wallpaper`. 2026-10-16
+  - [x] Login screen v2: SDDM theme `rain-city` (copy of simple_sddm_2) in `~/.local/share/desk-art/sddm/rain-city`: dark city image, JetBrains Mono, cream clock, orange date/accents, no teal blur. Viktor: "That's better!!" 2026-10-16
+  - [ ] Viktor installs the SDDM theme (root commands in chat 2026-10-16).
+  - [x] Boot splash: Plymouth theme `rain-city` in `~/.local/share/desk-art/plymouth/rain-city` (lantern, breathing amber glow, thin progress line). 2026-10-16
+  - [ ] Viktor installs Plymouth + theme, adds `quiet splash` to GRUB (boot is via GRUB, `GRUB_CMDLINE_LINUX_DEFAULT` currently unset).
+  - [ ] Optional: GRUB theme in Rain-city (currently `starfield`).
+  - [x] 14 Lantern tab illustrations (line-art, amber/teal) in `~/Pictures/desk-art/lantern-tabs/`. 2026-10-16
+  - [?] Regenerate the tab illustrations in the new darker, high-quality style?
+  - [ ] `~/.local/share/desk-art` + wallpapers go to the ThinkPad via rsync (too big for git).
   - [x] `desk-wallpaper`: wallpaper of the day from the active theme's folder (same all day, never yesterday's; `--next` for another); `desk-theme` brings the theme's wallpaper along. 2026-10-16
   - [ ] Viktor enables the daily change: `systemctl --user enable --now desk-wallpaper.timer` (06:00 + 30 s after login).
   - [ ] Wallpapers to the ThinkPad via rsync (kept out of git, ~30 MB).

@@ -24,12 +24,16 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     ap.add_argument("prompt")
     ap.add_argument("-o", "--out", required=True)
-    ap.add_argument("--size", default="1536x1024", help="1024x1024, 1536x1024 (landscape), 1024x1536")
+    ap.add_argument("--size", default="1536x1024", help="WxH, both divisible by 16, longest edge <= 3840 (e.g. 3840x2400)")
     ap.add_argument("--quality", default="medium", choices=["low", "medium", "high"])
-    ap.add_argument("--model", default="gpt-image-1.5")
+    ap.add_argument("--model", default="gpt-image-2.5-flare")
+    ap.add_argument("--transparent", action="store_true", help="transparent background (PNG)")
     a = ap.parse_args()
 
-    body = json.dumps({"model": a.model, "prompt": a.prompt, "size": a.size, "quality": a.quality, "n": 1}).encode()
+    payload = {"model": a.model, "prompt": a.prompt, "size": a.size, "quality": a.quality, "n": 1}
+    if a.transparent:
+        payload.update(background="transparent", output_format="png")
+    body = json.dumps(payload).encode()
     req = urllib.request.Request("https://api.openai.com/v1/images/generations", data=body, headers={
         "Authorization": f"Bearer {key()}", "Content-Type": "application/json"})
     try:
