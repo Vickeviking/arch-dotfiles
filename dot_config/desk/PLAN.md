@@ -77,6 +77,9 @@ Tabs:
 - [ ] **Network → Home map**: devices on the LAN, new-device alerts, open ports on your own devices.
 - [ ] **Network → Packet inspector**: live capture + protocol decode of own traffic (tshark engine; one-time root setup by Viktor: `wireshark` group / capabilities).
 - [ ] **Network → Wi-Fi radio**: nearby networks, channels, signal over time, interference.
+- [ ] **Network → Router** (Viktor has the admin password, 2026-10-16): device list, traffic and logs from the router itself; feed Lantern's Home map. If the model supports OpenWrt: per-device stats, house-wide ad-block, SQM, WireGuard home VPN (Viktor flashes it himself).
+- [?] Router brand + model? (sticker underneath)
+- [ ] Talk with Li before anything shows per-device detail for her devices.
 - [ ] **Wi-Fi**: connect / forget / hotspot (NetworkManager D-Bus).
 - [ ] **Bluetooth**: scan / pair / connect / battery levels (BlueZ D-Bus).
 - [ ] **Manuals**: man pages, tldr, offline Arch wiki, searchable.
