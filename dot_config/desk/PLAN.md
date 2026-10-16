@@ -97,7 +97,7 @@ Tabs:
 
 Phases:
 - [x] 0. Mockup (published 2026-10-16); Viktor: "Sexiigt!!! älskar den!!!", Atlas proportions loved.
-- [x] 1. Skeleton in `~/dev/project/Watchtower`: layer-shell overlay on the focused monitor, 10 tabs, live desk-theme colors, Super+Space toggle (resident, ~20 ms reopen), j/k 1–0 gg G f ? Esc, live Home cards, 8 tests. Not yet committed (Viktor's call). 2026-10-16
+- [x] 1. Skeleton in `~/dev/project/Watchtower`: layer-shell overlay on the focused monitor, 10 tabs, live desk-theme colors, Super+Space toggle (resident, ~20 ms reopen), j/k 1–0 gg G f ? Esc, live Home cards, 8 tests. Committed (`ee69826`), on both machines. 2026-10-16
 - [ ] 1b. Polish: regenerate tab art in the photo style; `ttf-ibm-plex` for the intended font; autostart with `exec-once` (Viktor decides).
 - [ ] 2. System + Processes.
 - [ ] 3. Wi-Fi + Bluetooth (unblocks the ThinkPad GUI swap).
