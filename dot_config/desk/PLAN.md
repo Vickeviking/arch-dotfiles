@@ -75,6 +75,7 @@ Today GitHub (`Vickeviking/arch-dotfiles`, chezmoi), the desktop and the ThinkPa
 
 Tabs:
 - [ ] **Home**: launcher + quick actions (what Flywheel did), at-a-glance machine health.
+- [ ] **Machines** (Viktor 2026-10-16): one-key SSH into the ThinkPad and the Raspberry Pi (`gunnar`) and the other machines, opening a themed kitty; show each node's status (online via Tailscale, CPU/temp from `lantern-agent`).
 - [ ] **System**: CPU per core, RAM/swap, GPU, temps, disks, battery, uptime; history graphs.
 - [ ] **Processes**: sortable list, tree view, kill/renice (with confirmation), per-process CPU/RAM/IO/network.
 - [ ] **Network → Per-app traffic**: which program talks to which host, bandwidth, GeoIP country.
@@ -145,7 +146,9 @@ Phases:
   - [x] Rain-city set v2 (6): alley photo, street render, rooftop photo, platform render, desk photo, harbor render. Painted v1 set trashed. 2026-10-16
   - [x] `desk-wallpaper` crops per monitor aspect (laptop 16:10 → 3456×2160, 4K → 3840×2160), cached in `~/.cache/desk-wallpaper`. 2026-10-16
   - [x] Login screen v2: SDDM theme `rain-city` (copy of simple_sddm_2) in `~/.local/share/desk-art/sddm/rain-city`: dark city image, JetBrains Mono, cream clock, orange date/accents, no teal blur. Viktor: "That's better!!" 2026-10-16
-  - [ ] Viktor installs the SDDM theme (root commands in chat 2026-10-16).
+  - [x] SDDM theme, Plymouth (hook + theme) and GRUB theme installed by Viktor on both machines. 2026-10-16
+  - [?] GRUB lists every firmware entry ("EFI BootNext"): `GRUB_DISABLE_BOOTNEXT=true`, plus os-prober for a single Windows entry if Windows is still used.
+  - [x] nvim follows desk-theme (`colors/desk.lua`, live recolor, lualine from palette). Viktor: "sooo crisp". 2026-10-16
   - [x] Boot splash: Plymouth theme `rain-city` in `~/.local/share/desk-art/plymouth/rain-city` (lantern, breathing amber glow, thin progress line). 2026-10-16
   - [ ] Viktor installs Plymouth + theme, adds `quiet splash` to GRUB (boot is via GRUB, `GRUB_CMDLINE_LINUX_DEFAULT` currently unset).
   - [x] GRUB theme `rain-city` in `~/.local/share/desk-art/grub/rain-city` (dark city, orange band of light, JetBrains Mono, amber selection bar, thin countdown line). 2026-10-16
