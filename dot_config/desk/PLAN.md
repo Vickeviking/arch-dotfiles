@@ -58,7 +58,10 @@ Viktor's master plan for both machines (desktop `legion-arch` + ThinkPad), the L
 - [x] Styling rolled out 2026-10-16: desk-theme + palettes, Rain City waybar, Hyprland Lua (border, animations, keybinds), hyprlock, kitty, rofi, swaync, wallpapers + art (rsync), `desk-mods` + `rain-city` plugin. Every file compared first; backups `*.bak-20261016-*`; waybar rollback `~/.config/themes/waybar-rollback.sh`. `hyprctl configerrors` clean, screenshot verified.
 - [x] waybar privacy no longer flags spektra's speaker capture as the mic (both machines). 2026-10-16
 - [ ] Viktor (root): `sudo pacman -S imagemagick arch-audit`; SDDM + Plymouth + GRUB theme like the desktop (initramfs uses the `systemd` hook; GRUB cmdline already `loglevel=3 quiet`); GRUB theme header already says `vango-arch-thinkpad`, GFXMODE 1920x1080.
-- [ ] Viktor: `/theme` → Desk, paste statusLine + spinnerVerbs, `systemctl --user enable --now desk-wallpaper.timer`.
+- [x] Viktor: `/theme` → Desk, statusLine + spinnerVerbs, wallpaper timer (both machines). 2026-10-16
+- [x] GTK synced 2026-10-16: `~/.themes` + `~/.icons` (Flat-Remix GTK/icons, Bibata cursor; manual installs, not packages) rsynced; `gtk-3.0/settings.ini` + window rules (no forced maximize) in chezmoi; hidden files shown in GTK3/GTK4 dialogs and Thunar on both; ThinkPad dialog size 1100×650.
+- [ ] ThinkPad has no file manager: Viktor runs `sudo pacman -S thunar gvfs tumbler thunar-archive-plugin thunar-volman ffmpegthumbnailer xarchiver` (settings already placed).
+- [ ] GTK colors from the desk palette (instead of Flat-Remix blue) so dialogs/Thunar match the theme.
 - [ ] ThinkPad-only uncommitted chezmoi changes (monitor profiles, waybar Modules/ModulesCustom, Brightness.sh, RefreshModeDaemon.py): review + commit in the dotfiles clean-up.
 - [ ] Replace nm-applet + blueman with Lantern's Wi-Fi and Bluetooth tabs; waybar icons open those tabs.
 - [ ] Install the `desk-mods` marketplace + `rain-city` plugin.
