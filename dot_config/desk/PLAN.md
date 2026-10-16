@@ -12,9 +12,9 @@ Viktor's master plan for both machines (desktop `legion-arch` + ThinkPad), the L
 
 ## Now (in order)
 
-1. [ ] **ThinkPad SSH is unreachable since its reboot** (ping works, port 22 doesn't). Viktor runs on the ThinkPad: `systemctl status sshd --no-pager | head -5; sudo ufw status verbose | head -12; ip -br addr | grep -i tailscale`.
+1. [x] ThinkPad SSH works again (it was mid-update). 2026-10-16
 2. [ ] Desktop finishing touches (Viktor): `/theme` → *Desk · Rain-city noir*, paste `statusLine` + `spinnerVerbs` into `~/.claude/settings.json`, `sudo pacman -S arch-audit`.
-3. [ ] Commit + push today's dotfiles (Viktor's OK given 2026-10-16), then roll out styling to the ThinkPad.
+3. [x] Dotfiles pushed and styling rolled out to the ThinkPad. 2026-10-16
 4. [ ] Lantern: design mockup (artifact) → Viktor approves → phase 1.
 5. [ ] Dotfiles: one source of truth (see **Dotfiles & sync**).
 6. [ ] Backups.
@@ -55,7 +55,11 @@ Viktor's master plan for both machines (desktop `legion-arch` + ThinkPad), the L
 - [ ] **Wallpapers per theme**: each palette ships a matching wallpaper (optional, toggle).
 
 ## ThinkPad
-- [ ] Roll out styling (themes, scripts, waybar, Hyprland Lua, kitty, rofi, swaync, hyprlock, `rain-city` mod). Compare every file first; keybinds, monitors and hyprlock may be machine-specific.
+- [x] Styling rolled out 2026-10-16: desk-theme + palettes, Rain City waybar, Hyprland Lua (border, animations, keybinds), hyprlock, kitty, rofi, swaync, wallpapers + art (rsync), `desk-mods` + `rain-city` plugin. Every file compared first; backups `*.bak-20261016-*`; waybar rollback `~/.config/themes/waybar-rollback.sh`. `hyprctl configerrors` clean, screenshot verified.
+- [x] waybar privacy no longer flags spektra's speaker capture as the mic (both machines). 2026-10-16
+- [ ] Viktor (root): `sudo pacman -S imagemagick arch-audit`; SDDM + Plymouth + GRUB theme like the desktop (initramfs uses the `systemd` hook; GRUB cmdline already `loglevel=3 quiet`); GRUB theme header already says `vango-arch-thinkpad`, GFXMODE 1920x1080.
+- [ ] Viktor: `/theme` → Desk, paste statusLine + spinnerVerbs, `systemctl --user enable --now desk-wallpaper.timer`.
+- [ ] ThinkPad-only uncommitted chezmoi changes (monitor profiles, waybar Modules/ModulesCustom, Brightness.sh, RefreshModeDaemon.py): review + commit in the dotfiles clean-up.
 - [ ] Replace nm-applet + blueman with Lantern's Wi-Fi and Bluetooth tabs; waybar icons open those tabs.
 - [ ] Install the `desk-mods` marketplace + `rain-city` plugin.
 
