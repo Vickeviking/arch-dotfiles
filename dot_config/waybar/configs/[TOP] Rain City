@@ -35,7 +35,6 @@
 	"custom/player_next",
 	"custom/playerctl",
 	"clock",
-	"custom/spektra",
 	"custom/arcturon_server",
 	"custom/shutdown_timer",
 	],
