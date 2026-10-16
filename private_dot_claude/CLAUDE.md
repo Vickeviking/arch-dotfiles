@@ -26,4 +26,4 @@ Two Arch + Hyprland machines on Tailscale: this desktop and the ThinkPad (`ssh v
 
 ## The plan
 
-`~/.config/desk/PLAN.md` is Viktor's master plan (machines, Lantern hub, Quick ask, backups, Arcturon). Read it before machine work. When Viktor mentions a new idea or decision, append it to the matching section (or Inbox) with the date, and tick items off as they get done.
+`~/.config/desk/PLAN.md` is Viktor's master plan (machines, Watchtower hub, Quick ask, backups, Arcturon). Read it before machine work. When Viktor mentions a new idea or decision, append it to the matching section (or Inbox) with the date, and tick items off as they get done.
