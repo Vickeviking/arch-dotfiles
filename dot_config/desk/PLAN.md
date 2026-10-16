@@ -144,7 +144,8 @@ Phases:
   - [ ] Viktor installs the SDDM theme (root commands in chat 2026-10-16).
   - [x] Boot splash: Plymouth theme `rain-city` in `~/.local/share/desk-art/plymouth/rain-city` (lantern, breathing amber glow, thin progress line). 2026-10-16
   - [ ] Viktor installs Plymouth + theme, adds `quiet splash` to GRUB (boot is via GRUB, `GRUB_CMDLINE_LINUX_DEFAULT` currently unset).
-  - [ ] Optional: GRUB theme in Rain-city (currently `starfield`).
+  - [x] GRUB theme `rain-city` in `~/.local/share/desk-art/grub/rain-city` (dark city, orange band of light, JetBrains Mono, amber selection bar, thin countdown line). 2026-10-16
+  - [ ] Viktor installs GRUB theme together with `quiet splash` (one `grub-mkconfig` run). Header text says `legion-arch`: the ThinkPad copy needs its own hostname.
   - [x] 14 Lantern tab illustrations (line-art, amber/teal) in `~/Pictures/desk-art/lantern-tabs/`. 2026-10-16
   - [?] Regenerate the tab illustrations in the new darker, high-quality style?
   - [ ] `~/.local/share/desk-art` + wallpapers go to the ThinkPad via rsync (too big for git).

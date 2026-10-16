@@ -53,6 +53,13 @@ wallpaper_start_daemon
 # Each monitor gets a center crop at its own aspect ratio (crop only, never stretched),
 # cached in ~/.cache/desk-wallpaper.
 CACHE="$HOME/.cache/desk-wallpaper"; mkdir -p "$CACHE"
+monitors() { hyprctl monitors -j | python3 -I -c "import json,sys; [print(m['name'], m['width'], m['height']) for m in json.load(sys.stdin)]"; }
+if ! command -v magick >/dev/null; then
+    # No ImageMagick (sudo pacman -S imagemagick): show the image as-is; awww keeps its aspect ratio.
+    while read -r mon _ _; do
+        wallpaper_img -o "$mon" "$pick" --transition-type fade --transition-duration 1.2 --transition-fps 60
+    done < <(monitors)
+else
 read -r src_w src_h <<< "$(magick identify -format '%w %h' "$pick")"
 while read -r mon mw mh; do
     read -r cw ch < <(python3 -I -c "
@@ -63,7 +70,8 @@ print(cw, ch)")
     out="$CACHE/$(basename "${pick%.*}")-${cw}x${ch}.png"
     [[ -f $out ]] || magick "$pick" -gravity center -crop "${cw}x${ch}+0+0" +repage "$out"
     wallpaper_img -o "$mon" "$out" --transition-type fade --transition-duration 1.2 --transition-fps 60
-done < <(hyprctl monitors -j | python3 -I -c "import json,sys; [print(m['name'], m['width'], m['height']) for m in json.load(sys.stdin)]")
+done < <(monitors)
+fi
 "$SCRIPTSDIR/WallustSwww.sh" "$pick" >/dev/null 2>&1 || true   # keeps lock screen / wallust cache in sync
 "$HOME/.local/bin/desk-theme" --refresh >/dev/null 2>&1 || true  # only acts in 'wallpaper' theme mode
 
