@@ -50,7 +50,9 @@
 	"icon-spacing": 6,
 	"icon-size": 16,
 	"transition-duration": 250,
-	"ignore-monitor": true, // speaker-output "monitor" capture (spektra) is not a microphone
+	"ignore-monitor": true,
+	// spektra (visualizer) records the speaker output, not the microphone
+	"ignore": [ { "type": "audio-in", "name": "spektra" } ],
 	"modules": [
 		{ "type": "screenshare", "tooltip": true, "tooltip-icon-size": 20 },
 		{ "type": "audio-in", "tooltip": true, "tooltip-icon-size": 20 }
