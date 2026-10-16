@@ -49,7 +49,7 @@ local unbind = user_keybinds_helper.unbind
 
 -- Converted from UserKeybinds.conf
 bind("SUPER", "D", exec_cmd("pkill rofi || true && rofi -show drun -modi drun, filebrowser, run, window"))
-bind("SUPER", "B", exec_cmd("/home/vango/.local/bin/firefox-hybrid"))
+bind("SUPER", "B", exec_cmd("google-chrome-stable"), { description = "Chrome" }) -- was firefox-hybrid (2026-10-16)
 bind("SUPER SHIFT", "T", exec_cmd("pkill rofi || true && $HOME/.local/bin/desk-theme --rofi"), { description = "Desk theme picker" })
 bind("SUPER", "A", dispatch("global", "quickshell:overviewToggle"))
 bind("SUPER", "Return", exec_cmd("kitty"))
