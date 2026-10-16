@@ -46,6 +46,13 @@ case "${1:-}" in
         fi ;;
 esac
 
+# At login the timer can fire before Hyprland and its own awww-daemon are up;
+# wait for them (max 30 s) instead of racing them with a second daemon.
+for _ in $(seq 60); do
+    hyprctl monitors >/dev/null 2>&1 && pgrep -x awww-daemon >/dev/null && break
+    sleep 0.5
+done
+
 # shellcheck source=/dev/null
 source "$SCRIPTSDIR/WallpaperBackend.sh"
 wallpaper_start_daemon
