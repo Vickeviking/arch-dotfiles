@@ -137,9 +137,9 @@ def write(fname, text):
     os.replace(tmp, os.path.join(OUT, fname))
 
 
-def quiet(*cmd):
+def quiet(*cmd, timeout=5):
     try:
-        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=timeout)
     except (OSError, subprocess.TimeoutExpired):
         pass
 
@@ -151,13 +151,15 @@ def reload_apps():
     quiet("swaync-client", "--reload-css")
 
 
-def switch(name):
+def switch(name, switch_wallpaper=True):
     if name not in names():
         sys.exit(f"desk-theme: unknown theme '{name}'. Available: {', '.join(names())}")
     p = load(name)
     render(name, p)
     reload_apps()
     print(f"desk-theme: {p['name']} active")
+    if switch_wallpaper:   # bring the theme's wallpaper of the day (themes without a folder keep theirs)
+        quiet(os.path.join(HOME, ".local/bin/desk-wallpaper"), timeout=30)
 
 
 def main(argv):
@@ -174,7 +176,7 @@ def main(argv):
             start = time.time()                     # wallust runs in the background; wait for its write
             while time.time() - start < 4 and os.path.getmtime(WALLUST_CSS) < start - 1:
                 time.sleep(.2)
-            switch("wallpaper")
+            switch("wallpaper", switch_wallpaper=False)
     elif arg == "--rofi":
         cur = active()
         menu = "\n".join(("● " if n == cur else "   ") + n for n in names())

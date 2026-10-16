@@ -1,0 +1,10 @@
+[Unit]
+Description=Pick a new desk wallpaper every day (and once after login)
+
+[Timer]
+OnCalendar=*-*-* 06:00:00
+OnStartupSec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

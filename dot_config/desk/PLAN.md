@@ -137,7 +137,12 @@ Phases:
 ## Inbox
 - 2026-10-16 **Image generation**: `desk-imagine "prompt" -o file.png` (OpenAI Images, key in `~/.config/desk/image-api.env`, mode 600, ignored by chezmoi). Key expires 2026-10-17; ~$3.50 credit. Revoke it at platform.openai.com when done (it was pasted in chat).
   - [x] Wallpapers for neon-rain, tokyo-night, rose-pine-moon, gruvbox-warm + Lantern icon in `~/Pictures/wallpapers/desk/`. 2026-10-16
-  - [ ] `desk-theme` switches the wallpaper with the palette (toggle); trim the icon's white corners.
+  - [x] 5 Rain-city wallpapers (street, alley, window, train, tram stop) in `~/Pictures/wallpapers/desk/rain-city/`; icon moved to `~/Pictures/desk-art/` (out of KooL's random-wallpaper path). 2026-10-16
+  - [x] `desk-wallpaper`: wallpaper of the day from the active theme's folder (same all day, never yesterday's; `--next` for another); `desk-theme` brings the theme's wallpaper along. 2026-10-16
+  - [ ] Viktor enables the daily change: `systemctl --user enable --now desk-wallpaper.timer` (06:00 + 30 s after login).
+  - [ ] Wallpapers to the ThinkPad via rsync (kept out of git, ~30 MB).
+  - [ ] More wallpapers for the other themes (1 each today) while credit lasts.
+  - [ ] Trim the Lantern icon's white corners.
   - [ ] Wallpapers are 1536×1024: upscale for the 4K monitor or regenerate larger if they look soft.
   - [ ] Still to make while the credit lasts: SDDM/plymouth art, Lantern tab illustrations.
 

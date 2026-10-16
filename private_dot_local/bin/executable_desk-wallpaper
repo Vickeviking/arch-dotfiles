@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# desk-wallpaper: wallpaper of the day from the active desk-theme's folder.
+#
+#   desk-wallpaper            apply today's pick (same all day, never yesterday's)
+#   desk-wallpaper --next     apply a random other one from the folder
+#   desk-wallpaper --list     show the folder and today's pick
+#
+# Folder: ~/Pictures/wallpapers/desk/<theme>/  (theme from ~/.config/themes/current/name)
+# Themes without a folder (e.g. "wallpaper") are left alone.
+set -euo pipefail
+
+THEME=$(cat "$HOME/.config/themes/current/name" 2>/dev/null || echo rain-city)
+DIR="$HOME/Pictures/wallpapers/desk/$THEME"
+STATE="$HOME/.local/state/desk-wallpaper"
+SCRIPTSDIR="$HOME/.config/hypr/scripts"
+mkdir -p "$STATE"
+
+[[ -d $DIR ]] || { echo "desk-wallpaper: no folder for theme '$THEME' ($DIR), leaving wallpaper as is"; exit 0; }
+mapfile -t PICS < <(find "$DIR" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) | sort)
+(( ${#PICS[@]} )) || { echo "desk-wallpaper: $DIR is empty"; exit 0; }
+
+today=$(date +%F)
+last_file="$STATE/$THEME.last"     # "<date> <path>" of the previous pick
+last_date=""; last_pick=""
+[[ -f $last_file ]] && read -r last_date last_pick < "$last_file" || true
+
+pick_other() {   # random pick that isn't $1 (when there is a choice)
+    local avoid=$1 p
+    for _ in 1 2 3 4 5 6 7 8; do
+        p=${PICS[RANDOM % ${#PICS[@]}]}
+        [[ $p != "$avoid" || ${#PICS[@]} -eq 1 ]] && { echo "$p"; return; }
+    done
+    echo "${PICS[0]}"
+}
+
+case "${1:-}" in
+    --list)
+        printf '%s\n' "${PICS[@]}"; echo "today: ${last_date:-none} ${last_pick:-}"; exit 0 ;;
+    --next)
+        pick=$(pick_other "$last_pick") ;;
+    *)
+        if [[ $last_date == "$today" && -f $last_pick && $last_pick == "$DIR"/* ]]; then
+            pick=$last_pick                       # already chosen today: keep it
+        else
+            pick=$(pick_other "$last_pick")       # new day: anything but yesterday's
+        fi ;;
+esac
+
+# shellcheck source=/dev/null
+source "$SCRIPTSDIR/WallpaperBackend.sh"
+wallpaper_start_daemon
+wallpaper_img "$pick" --transition-type fade --transition-duration 1.2 --transition-fps 60
+"$SCRIPTSDIR/WallustSwww.sh" "$pick" >/dev/null 2>&1 || true   # keeps lock screen / wallust cache in sync
+"$HOME/.local/bin/desk-theme" --refresh >/dev/null 2>&1 || true  # only acts in 'wallpaper' theme mode
+
+echo "$today $pick" > "$last_file"
+echo "desk-wallpaper: $(basename "$pick")"
