@@ -123,7 +123,8 @@ Phases:
 - [ ] Clean-up, refactoring, tests, scaling review, documentation.
 
 ## Inbox
-- (new ideas land here until sorted)
+- 2026-10-16 **Image generation for the desk**: per-theme wallpapers, Lantern icons/illustrations, SDDM/plymouth art. Options: API key (Viktor stores it himself in `~/.config/desk/image-api.env`, mode 600, never in chat, kept out of chezmoi) and/or local Flux/SDXL in the existing ComfyUI container on the desktop GPU.
+  - [?] Which provider / local first?
 
 ## Decisions
 - 2026-10-15 Security: sensible, not paranoid; nothing that can lock Viktor out.
