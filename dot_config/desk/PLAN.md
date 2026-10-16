@@ -13,9 +13,9 @@ Viktor's master plan for both machines (desktop `legion-arch` + ThinkPad), the W
 
 ## Now (in order)
 
-1. [~] **Watchtower phase 0**: mockup published (https://claude.ai/artifact/GnzJ3TH7Hb7zRxgBXDyTvA) → Viktor reacts → phase 1 skeleton.
+1. [~] **Watchtower**: phase 0 mockup loved; phase 1 skeleton built and on Super+Space (2026-10-16) → Viktor tries it → phase 2 (System + Processes).
 2. [ ] ThinkPad: Viktor installs Thunar (`sudo pacman -S thunar gvfs tumbler thunar-archive-plugin thunar-volman ffmpegthumbnailer xarchiver`).
-3. [?] GRUB clutter: does Viktor still use Windows? Then `GRUB_DISABLE_BOOTNEXT=true` (+ os-prober for one clean Windows entry).
+3. [~] GRUB clutter (desktop, dual boot, Windows stays): `GRUB_DISABLE_BOOTNEXT=true` removes the 10 PXE/duplicate BootNext entries; the custom `11_windows` entry stays. Viktor runs the commands. 2026-10-16
 4. [ ] Dotfiles: one source of truth (see **Dotfiles & sync**).
 5. [ ] Backups.
 
@@ -92,11 +92,13 @@ Tabs:
 - [ ] DNS on the Pi: AdGuard Home on `gunnar` (DNS Observatory + house-wide ad-block); keep it light, the Pi runs Arcturon production.
 - [ ] Router: device list, traffic and logs; if supported, OpenWrt (per-device stats, SQM, WireGuard home VPN; Viktor flashes it).
 - [ ] Talk with Li before anything shows per-device detail for her devices.
-- [?] Router brand + model? 4th machine ("mycomputer")?
+- 2026-10-16 Router is a **D-Link R15** (EAGLE PRO AI AX1500). Not in OpenWrt's hardware table as far as we can find, so no flashing: device discovery runs from `gunnar` (ARP/neighbours, AdGuard client list) and the router's own web UI.
+- 2026-10-16 4th machine "mycomputer" is Viktor's **Windows Legion tower**. Machines tab shows it as a Windows box (ping/Tailscale if added later, no agent for now).
 
 Phases:
-- [~] 0. Mockup (published 2026-10-16), Viktor approves the look.
-- [ ] 1. Skeleton: layer-shell window, tabs, theme loading, Super+Space toggle, keyboard map, <100 ms open.
+- [x] 0. Mockup (published 2026-10-16); Viktor: "Sexiigt!!! älskar den!!!", Atlas proportions loved.
+- [x] 1. Skeleton in `~/dev/project/Watchtower`: layer-shell overlay on the focused monitor, 10 tabs, live desk-theme colors, Super+Space toggle (resident, ~20 ms reopen), j/k 1–0 gg G f ? Esc, live Home cards, 8 tests. Not yet committed (Viktor's call). 2026-10-16
+- [ ] 1b. Polish: regenerate tab art in the photo style; `ttf-ibm-plex` for the intended font; autostart with `exec-once` (Viktor decides).
 - [ ] 2. System + Processes.
 - [ ] 3. Wi-Fi + Bluetooth (unblocks the ThinkPad GUI swap).
 - [ ] 4. Machines + `watchtower-agent` + Galaxy (own fleet).
@@ -139,9 +141,12 @@ Phases:
 ## Inbox
 - 2026-10-16 Viktor: "Galaxy" renamed **Atlas** (World globe with GeoIP arcs from Uppsala + Home network view); new tabs **Toolbox** (own-device scans, traceroute, DNS, TLS, capture, bufferbloat) and **Settings** (one place for Wi-Fi, Bluetooth, display, sound, look, keyboard, power, notifications, privacy, updates, startup). Mockup v3 has all of it.
 - 2026-10-16 Away from home: gunnar is the always-home sensor; Watchtower reaches it over the tailnet.
-- 2026-10-16 Control the TV over the internet via gunnar [?] TV brand?
+- 2026-10-16 TV is a Samsung smart TV; Viktor: no need to control it. Dropped.
+
+- 2026-10-16 Atlas with real data (Viktor's packet-radar brief): own machine first. Phase A without root: live connections from `ss`/conntrack + an offline GeoIP database (DB-IP lite) → arcs; per-connection bytes. Phase B: a small capture helper with only `cap_net_raw` (Viktor runs `setcap`) for packet metadata via libpcap; flow engine groups packets into connections. Click an arc → panel: IP, estimated country/city, protocol/port, packets/s, bytes, first/last seen, how sure the geolocation is. Timeline replay. Traceroute hops drawn as the route. Limits shown in the UI: GeoIP is approximate (CDNs, VPNs), HTTPS hides URLs and content, other devices' traffic only via gunnar/AdGuard (DNS) since the R15 can't mirror ports; talk with Li first.
 
 ## Decisions
+- 2026-10-16 Desktop stays dual boot with Windows 11 (own disk, own ESP).
 - 2026-10-15 Security: sensible, not paranoid; nothing that can lock Viktor out.
 - 2026-10-16 Theme: Rain-city noir default; snappy & subtle animations; Chrome is the daily browser.
 - 2026-10-16 Hub renamed Lantern → **Watchtower**. Rust + GTK4; Flywheel retired; Super+H freed; Wi-Fi/Bluetooth as hub tabs; Ask kept if it stays fast; `j`/`k` and `?` are musts.
