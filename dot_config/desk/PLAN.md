@@ -13,9 +13,9 @@ Viktor's master plan for both machines (desktop `legion-arch` + ThinkPad), the W
 
 ## Now (in order)
 
-1. [~] **Watchtower**: phase 0 mockup loved; phase 1 skeleton built and on Super+Space (2026-10-16) → Viktor tries it → phase 2 (System + Processes).
+1. [~] **Watchtower**: all ten tabs live on both machines (2026-10-16) → nvim-style focus model (Viktor, below) → `watchtower-agent` + Settings Privacy/Startup.
 2. [ ] ThinkPad: Viktor installs Thunar (`sudo pacman -S thunar gvfs tumbler thunar-archive-plugin thunar-volman ffmpegthumbnailer xarchiver`).
-3. [~] GRUB clutter (desktop, dual boot, Windows stays): `GRUB_DISABLE_BOOTNEXT=true` removes the 10 PXE/duplicate BootNext entries; the custom `11_windows` entry stays. Viktor runs the commands. 2026-10-16
+3. [x] GRUB clutter (desktop, dual boot, Windows stays): `GRUB_DISABLE_BOOTNEXT=true` removed the PXE/duplicate BootNext entries, `11_windows` stays; plus `resume=` and the `resume` hook so hibernation can wake. Done by Viktor 2026-10-16.
 4. [ ] Dotfiles: one source of truth (see **Dotfiles & sync**).
 5. [ ] Backups.
 
@@ -99,11 +99,12 @@ Phases:
 - [x] 0. Mockup (published 2026-10-16); Viktor: "Sexiigt!!! älskar den!!!", Atlas proportions loved.
 - [x] 1. Skeleton in `~/dev/project/Watchtower`: layer-shell overlay on the focused monitor, 10 tabs, live desk-theme colors, Super+Space toggle (resident, ~20 ms reopen), j/k 1–0 gg G f ? Esc, live Home cards, 8 tests. Committed (`ee69826`), on both machines. 2026-10-16
 - [ ] 1b. Polish: regenerate tab art in the photo style; `ttf-ibm-plex` for the intended font; autostart with `exec-once` (Viktor decides).
-- [ ] 2. System + Processes.
-- [ ] 3. Wi-Fi + Bluetooth (unblocks the ThinkPad GUI swap).
-- [ ] 4. Machines + `watchtower-agent` + Galaxy (own fleet).
-- [ ] 5. Manuals + Keybinds + Ask.
+- [x] 2. System + Processes (collector thread, never wakes a sleeping NVIDIA GPU, 0.15 % CPU while hidden). 2026-10-16
+- [x] 3. Settings: Wi-Fi, Bluetooth, sound, displays, brightness, theme, DND, keyboard, power, updates. [ ] Privacy and Startup sections. [ ] Waybar Wi-Fi/Bluetooth clicks → `watchtower --tab settings`, then drop nm-applet + blueman on the ThinkPad. 2026-10-16
+- [~] 4. Machines (tailnet + ping + SSH) and Atlas (live `ss` connections on a cairo globe, offline DB-IP lite in `~/.local/share/watchtower/`, physics check flags CDN/anycast, `t` tracepath route) done. [ ] `watchtower-agent` for per-machine detail. [ ] Refresh the GeoIP DB monthly. 2026-10-16
+- [x] 5. Manuals (man + offline Arch wiki + std search, Rust/embedded/Linux shelf, man page of the day, `r` random), Keybinds (live from hyprctl), Ask (Claude Haiku read-only or local Ollama; ThinkPad has no Ollama), Toolbox (listening ports, own-machine port check, latency, DNS, TLS). 2026-10-16
 - [ ] 6. Network Observatory modes, in the build order above.
+- Note: an untracked `crates/wt` (network toolkit start) sits in the Watchtower repo from a parallel run; Viktor decides keep or trash.
 - Art: app icon `~/Pictures/desk-art/watchtower-icon.png` (lone tower, orange light); 14 line-art tab illustrations in `~/Pictures/desk-art/watchtower-tabs/` [?] regenerate in the darker photo-render style.
 - Decisions: Flywheel retired (repo stays); Super+H freed (old `hypr_sheet.py` retires).
 
@@ -144,6 +145,8 @@ Phases:
 - 2026-10-16 TV is a Samsung smart TV; Viktor: no need to control it. Dropped.
 
 - 2026-10-16 Atlas with real data (Viktor's packet-radar brief): own machine first. Phase A without root: live connections from `ss`/conntrack + an offline GeoIP database (DB-IP lite) → arcs; per-connection bytes. Phase B: a small capture helper with only `cap_net_raw` (Viktor runs `setcap`) for packet metadata via libpcap; flow engine groups packets into connections. Click an arc → panel: IP, estimated country/city, protocol/port, packets/s, bytes, first/last seen, how sure the geolocation is. Timeline replay. Traceroute hops drawn as the route. Limits shown in the UI: GeoIP is approximate (CDNs, VPNs), HTTPS hides URLs and content, other devices' traffic only via gunnar/AdGuard (DNS) since the R15 can't mirror ports; talk with Li first.
+
+- 2026-10-16 Viktor: Watchtower navigation like nvim windows. Ctrl+h / Ctrl+l move between the menu and the view. In the menu j/k change tab; in the view j/k scroll AND step through every clickable thing (cards, rows, buttons), Enter clicks it. Same keys everywhere.
 
 ## Decisions
 - 2026-10-16 Desktop stays dual boot with Windows 11 (own disk, own ESP).
