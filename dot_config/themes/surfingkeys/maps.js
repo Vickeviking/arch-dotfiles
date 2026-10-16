@@ -19,6 +19,10 @@ api.map(L + 'bn', 'R');           // next tab                      (<leader>bn b
 api.map(L + 'bp', 'E');           // previous tab                  (<leader>bp bprevious)
 api.map(L + 'bd', 'x');           // close tab                     (<leader>bd bdelete)
 
+// --- quick tab switching: Shift+J / Shift+K (Viktor 2026-10-16) ------------
+api.map('K', 'R');                // next tab
+api.map('J', 'E');                // previous tab
+
 // --- jumps: <leader>jb / <leader>jf = history back / forward ---------------
 api.map(L + 'jb', 'S');           // back                          (<leader>jb C-o)
 api.map(L + 'jf', 'D');           // forward                       (<leader>jf C-i)
