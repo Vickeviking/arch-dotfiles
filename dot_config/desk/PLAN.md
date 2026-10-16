@@ -146,6 +146,7 @@ Phases:
 
 - 2026-10-16 Atlas with real data (Viktor's packet-radar brief): own machine first. Phase A without root: live connections from `ss`/conntrack + an offline GeoIP database (DB-IP lite) → arcs; per-connection bytes. Phase B: a small capture helper with only `cap_net_raw` (Viktor runs `setcap`) for packet metadata via libpcap; flow engine groups packets into connections. Click an arc → panel: IP, estimated country/city, protocol/port, packets/s, bytes, first/last seen, how sure the geolocation is. Timeline replay. Traceroute hops drawn as the route. Limits shown in the UI: GeoIP is approximate (CDNs, VPNs), HTTPS hides URLs and content, other devices' traffic only via gunnar/AdGuard (DNS) since the R15 can't mirror ports; talk with Li first.
 
+- 2026-10-16 Done: nvim-style navigation, OnDemand keyboard (no lock-out), machine detail views over SSH, compact ThinkPad layout. Open: ThinkPad's SSH key isn't on gunnar (Viktor: `ssh-copy-id vango@gunnar` from the ThinkPad if wanted); the desktop has no sshd, so the ThinkPad can't read it (backups plan covers that).
 - 2026-10-16 Viktor: Watchtower navigation like nvim windows. Ctrl+h / Ctrl+l move between the menu and the view. In the menu j/k change tab; in the view j/k scroll AND step through every clickable thing (cards, rows, buttons), Enter clicks it. Same keys everywhere.
 
 ## Decisions
