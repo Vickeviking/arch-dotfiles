@@ -1,0 +1,32 @@
+{
+  "name": "Rain-city noir",
+  "colors": {
+    "surface": "#0F1216",
+    "panel": "#171B21",
+    "border": "#2A3038",
+    "text": "#E6DCCB",
+    "muted": "#8A8F96",
+    "accent": "#F0913C",
+    "accent2": "#6E9A9C",
+    "ok": "#8FB573",
+    "alert": "#E5534B"
+  },
+  "ansi": [
+    "#171B21",
+    "#E5534B",
+    "#8FB573",
+    "#E8B45A",
+    "#6C8FB8",
+    "#B07AA1",
+    "#6E9A9C",
+    "#CFC6B6",
+    "#4A515C",
+    "#F2726B",
+    "#A9CC8E",
+    "#F5C77A",
+    "#8DAED3",
+    "#C99BC0",
+    "#8FBDBF",
+    "#E6DCCB"
+  ]
+}

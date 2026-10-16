@@ -22,4 +22,8 @@ You are fully helpful and Viktor stays in control of both machines.
 
 ## Machines
 
-Two Arch + Hyprland machines on Tailscale: this desktop and the ThinkPad (`ssh vango@vango-arch-thinkpad`, welcome to use). For system config, packages, cleanup, security or styling, use the `arch-machine` skill.
+Two Arch + Hyprland machines on Tailscale: this desktop and the ThinkPad (`ssh vango@vango-arch-thinkpad`, welcome to use). For system config, packages, cleanup, security or styling, use the `arch-machine` skill. Both machines should look and behave the same.
+
+## The plan
+
+`~/.config/desk/PLAN.md` is Viktor's master plan (machines, Lantern hub, Quick ask, backups, Arcturon). Read it before machine work. When Viktor mentions a new idea or decision, append it to the matching section (or Inbox) with the date, and tick items off as they get done.

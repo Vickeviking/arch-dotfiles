@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""desk-theme: one palette for Hyprland, waybar, rofi, swaync, hyprlock, kitty and Claude Code.
+
+  desk-theme              list themes (* = active)
+  desk-theme <name>       switch to a palette from ~/.config/themes/palettes/<name>.json
+  desk-theme wallpaper    follow the wallpaper (colors derived from wallust)
+  desk-theme --refresh    re-derive from wallust if 'wallpaper' is active (run after a wallpaper change)
+  desk-theme --rofi       pick a theme from a rofi menu
+
+Writes ~/.config/themes/current/{colors.css,colors.rasi,colors.lua,hyprlock.conf,kitty.conf,name}
+and ~/.claude/themes/desk.json, then reloads the running apps.
+"""
+import json, os, re, subprocess, sys, time
+
+HOME = os.path.expanduser("~")
+BASE = os.path.join(HOME, ".config/themes")
+PALETTES = os.path.join(BASE, "palettes")
+OUT = os.path.join(BASE, "current")
+CLAUDE_THEME = os.path.join(HOME, ".claude/themes/desk.json")
+WALLUST_CSS = os.path.join(HOME, ".config/waybar/wallust/colors-waybar.css")
+ROLES = ["surface", "panel", "border", "text", "muted", "accent", "accent2", "ok", "alert"]
+
+
+def rgb(h):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def hexc(t):
+    return "#%02X%02X%02X" % tuple(max(0, min(255, round(v))) for v in t)
+
+
+def mix(a, b, t):
+    """t of a, (1-t) of b."""
+    ra, rb = rgb(a), rgb(b)
+    return hexc([ra[i] * t + rb[i] * (1 - t) for i in range(3)])
+
+
+def names():
+    return sorted(f[:-5] for f in os.listdir(PALETTES) if f.endswith(".json")) + ["wallpaper"]
+
+
+def active():
+    try:
+        return open(os.path.join(OUT, "name")).read().strip()
+    except OSError:
+        return None
+
+
+def from_wallust():
+    """Map the wallust palette onto our roles; waits briefly if wallust is still writing."""
+    css = open(WALLUST_CSS).read()
+    w = dict(re.findall(r"@define-color\s+([\w-]+)\s+(#[0-9A-Fa-f]{6})", css))
+    bg, fg = w["background"], w["foreground"]
+    c = dict(surface=bg, panel=mix(fg, bg, .06), border=mix(fg, bg, .18), text=fg,
+             muted=w.get("color8", mix(fg, bg, .5)), accent=w.get("color5", fg),
+             accent2=w.get("color6", fg), ok=w.get("color7", fg), alert=w.get("color4", fg))
+    ansi = [w.get(f"color{i}", fg) for i in range(16)]
+    return {"name": "Follow wallpaper", "colors": c, "ansi": ansi}
+
+
+def load(name):
+    if name == "wallpaper":
+        return from_wallust()
+    with open(os.path.join(PALETTES, name + ".json")) as f:
+        return json.load(f)
+
+
+def compat(c):
+    """The wallust slot names KooL's rofi/swaync/hyprlock themes use, mapped onto our roles.
+    Loaded after wallust's own file, so these win while a fixed theme is active."""
+    slots = {0: "panel", 1: "surface", 2: "surface", 3: "surface", 4: "accent2", 5: "accent",
+             6: "accent2", 7: "text", 8: "muted", 9: "panel", 10: "border", 11: "accent",
+             12: "accent", 13: "text", 14: "accent2", 15: "text"}
+    names = {"background": c["surface"], "foreground": c["text"], "cursor": c["accent"]}
+    names.update({f"color{i}": c[r] for i, r in slots.items()})
+    return names
+
+
+def render(name, p):
+    c, a = p["colors"], p["ansi"]
+    os.makedirs(OUT, exist_ok=True)
+    hdr = f"desk-theme: {p['name']} ({name}) - generated, edit ~/.config/themes/palettes instead"
+    w = compat(c)
+
+    css = [f"/* {hdr} */"] + [f"@define-color t-{k} {c[k]};" for k in ROLES]
+    css += ["/* wallust-compatible names (swaync) */"] + [f"@define-color {k} {v};" for k, v in w.items()]
+    css += [f"@define-color background-alt {mix(c['surface'], '#000000', .25)};"]
+    write("colors.css", "\n".join(css) + "\n")
+
+    rasi = [f"/* {hdr} */", "* {"] + [f"    t-{k}: {c[k]};" for k in ROLES]
+    rasi += ["    /* wallust-compatible names (KooL rofi themes) */"] + [f"    {k}: {v};" for k, v in w.items()]
+    rasi += [f"    background-color: {c['surface']};", f"    border-color: {c['accent']};",
+             f"    selected-normal-background: {c['accent']};", f"    selected-normal-foreground: {c['surface']};",
+             f"    normal-background: {c['surface']};", f"    normal-foreground: {c['text']};", "}"]
+    write("colors.rasi", "\n".join(rasi) + "\n")
+
+    lua = [f"-- {hdr}", "return {"] + [f'  {k} = "rgb({c[k][1:]})",' for k in ROLES] + ["}"]
+    write("colors.lua", "\n".join(lua) + "\n")
+
+    lock = [f"# {hdr}"] + [f"$t_{k} = rgb({c[k][1:]})" for k in ROLES]
+    lock += ["# wallust-compatible names (hyprlock.conf sources this after wallust)"]
+    lock += [f"${k} = rgb({v[1:]})" for k, v in w.items()]
+    write("hyprlock.conf", "\n".join(lock) + "\n")
+
+    kitty = [f"# {hdr}", f"background {c['surface']}", f"foreground {c['text']}",
+             f"cursor {c['accent']}", f"cursor_text_color {c['surface']}",
+             f"selection_background {c['border']}", f"selection_foreground {c['text']}",
+             f"url_color {c['accent2']}", f"active_border_color {c['accent']}",
+             f"inactive_border_color {c['border']}"] + [f"color{i} {a[i]}" for i in range(16)]
+    write("kitty.conf", "\n".join(kitty) + "\n")
+
+    claude = {"name": f"Desk · {p['name']}", "base": "dark", "overrides": {
+        "claude": c["accent"], "claudeShimmer": mix("#FFFFFF", c["accent"], .35),
+        "text": c["text"], "inactive": c["muted"], "inactiveShimmer": mix("#FFFFFF", c["muted"], .3),
+        "subtle": c["border"], "suggestion": c["accent2"], "permission": c["accent2"],
+        "permissionShimmer": mix("#FFFFFF", c["accent2"], .35),
+        "promptBorder": c["accent2"], "promptBorderShimmer": mix("#FFFFFF", c["accent2"], .35),
+        "bashBorder": c["accent"], "planMode": a[12], "autoAccept": a[13], "remember": a[14],
+        "success": c["ok"], "error": c["alert"], "warning": a[11], "warningShimmer": mix("#FFFFFF", a[11], .35),
+        "inverseText": c["surface"], "userMessageBackground": c["panel"],
+        "diffAdded": mix(c["ok"], c["surface"], .22), "diffRemoved": mix(c["alert"], c["surface"], .22),
+        "diffAddedDimmed": mix(c["ok"], c["surface"], .1), "diffRemovedDimmed": mix(c["alert"], c["surface"], .1),
+        "diffAddedWord": mix(c["ok"], c["surface"], .45), "diffRemovedWord": mix(c["alert"], c["surface"], .45),
+    }}
+    os.makedirs(os.path.dirname(CLAUDE_THEME), exist_ok=True)
+    with open(CLAUDE_THEME, "w") as f:
+        json.dump(claude, f, indent=2, ensure_ascii=False)
+
+    write("name", name + "\n")
+
+
+def write(fname, text):
+    tmp = os.path.join(OUT, fname + ".tmp")
+    with open(tmp, "w") as f:
+        f.write(text)
+    os.replace(tmp, os.path.join(OUT, fname))
+
+
+def quiet(*cmd):
+    try:
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+
+
+def reload_apps():
+    quiet("hyprctl", "reload")
+    quiet("pkill", "-SIGUSR2", "-x", "waybar")      # waybar reloads style + config
+    quiet("pkill", "-SIGUSR1", "-x", "kitty")       # kitty re-reads kitty.conf
+    quiet("swaync-client", "--reload-css")
+
+
+def switch(name):
+    if name not in names():
+        sys.exit(f"desk-theme: unknown theme '{name}'. Available: {', '.join(names())}")
+    p = load(name)
+    render(name, p)
+    reload_apps()
+    print(f"desk-theme: {p['name']} active")
+
+
+def main(argv):
+    if not argv:
+        cur = active()
+        for n in names():
+            print(("* " if n == cur else "  ") + n)
+        return
+    arg = argv[0]
+    if arg in ("-h", "--help"):
+        print(__doc__.strip())
+    elif arg == "--refresh":
+        if active() == "wallpaper":
+            start = time.time()                     # wallust runs in the background; wait for its write
+            while time.time() - start < 4 and os.path.getmtime(WALLUST_CSS) < start - 1:
+                time.sleep(.2)
+            switch("wallpaper")
+    elif arg == "--rofi":
+        cur = active()
+        menu = "\n".join(("● " if n == cur else "   ") + n for n in names())
+        r = subprocess.run(["rofi", "-dmenu", "-i", "-p", "Desk theme"], input=menu, capture_output=True, text=True)
+        pick = r.stdout.strip().lstrip("● ").strip()
+        if pick:
+            switch(pick)
+    else:
+        switch(arg)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

@@ -7,4 +7,85 @@
 
 {
 
+"custom/spektra": {
+	"format": "{}",
+	"return-type": "json",
+	"exec": "$HOME/.local/bin/spektra waybar",
+	"interval": 5,
+	"signal": 12,
+	"menu": "on-click",
+	"menu-file": "/home/vango/.config/spektra/waybar-menu.xml",
+	"menu-actions": {
+		"scene-ring": "$HOME/.local/bin/spektra ctl scene ring",
+		"scene-portal": "$HOME/.local/bin/spektra ctl scene portal",
+		"scene-mandala": "$HOME/.local/bin/spektra ctl scene mandala",
+		"hype-1": "$HOME/.local/bin/spektra ctl level 1",
+		"hype-2": "$HOME/.local/bin/spektra ctl level 2",
+		"hype-3": "$HOME/.local/bin/spektra ctl level 3",
+		"hype-4": "$HOME/.local/bin/spektra ctl level 4",
+		"theme-omslag": "$HOME/.local/bin/spektra ctl theme omslag",
+		"theme-neon": "$HOME/.local/bin/spektra ctl theme neon",
+		"theme-synthwave": "$HOME/.local/bin/spektra ctl theme synthwave",
+		"theme-is": "$HOME/.local/bin/spektra ctl theme is",
+		"theme-eld": "$HOME/.local/bin/spektra ctl theme eld",
+		"theme-matrix": "$HOME/.local/bin/spektra ctl theme matrix",
+		"theme-guld": "$HOME/.local/bin/spektra ctl theme guld",
+		"theme-regnbåge": "$HOME/.local/bin/spektra ctl theme regnbåge",
+		"screen-laptop": "$HOME/.local/bin/spektra ctl laptop",
+		"screen-external": "$HOME/.local/bin/spektra ctl external",
+		"borders": "$HOME/.local/bin/spektra ctl borders",
+		"saver": "$HOME/.local/bin/spektra ctl saver",
+		"saver-preview": "$HOME/.local/bin/spektra saver --preview",
+		"toggle": "$HOME/.local/bin/spektra ctl toggle"
+	},
+	"on-click-middle": "$HOME/.local/bin/spektra ctl color",
+	"on-click-right": "$HOME/.local/bin/spektra ctl toggle",
+	"on-scroll-up": "$HOME/.local/bin/spektra ctl up",
+	"on-scroll-down": "$HOME/.local/bin/spektra ctl down",
+	"tooltip": true,
+},
+
+// desk-theme additions (Rain City layout)
+"privacy": {
+	"icon-spacing": 6,
+	"icon-size": 16,
+	"transition-duration": 250,
+	"modules": [
+		{ "type": "screenshare", "tooltip": true, "tooltip-icon-size": 20 },
+		{ "type": "audio-in", "tooltip": true, "tooltip-icon-size": 20 }
+	]
+},
+
+"custom/desk_camera": {
+	"format": "{}",
+	"return-type": "json",
+	"exec": "$HOME/.local/bin/desk-camera",
+	"interval": 3,
+	"tooltip": true,
+},
+
+"custom/desk_updates": {
+	"format": "{}",
+	"return-type": "json",
+	"exec": "$HOME/.local/bin/desk-updates",
+	"interval": 1800,
+	"on-click": "kitty --hold -e $HOME/.local/bin/desk-updates --list",
+	"tooltip": true,
+},
+
+"group/desk_laptop": {
+	"orientation": "inherit",
+	"drawer": {
+		"transition-duration": 300,
+		"children-class": "laptop-child",
+		"transition-left-to-right": false
+	},
+	"modules": [
+		"battery",
+		"backlight",
+		"custom/night_light",
+		"custom/battery_conservation",
+	]
+},
+
 }

@@ -1,0 +1,32 @@
+{
+  "name": "Neon rain",
+  "colors": {
+    "surface": "#0B0D14",
+    "panel": "#121522",
+    "border": "#262B44",
+    "text": "#DDE3F5",
+    "muted": "#7C84A3",
+    "accent": "#3FE0D0",
+    "accent2": "#FF4FA3",
+    "ok": "#7CE38B",
+    "alert": "#FF5C5C"
+  },
+  "ansi": [
+    "#121522",
+    "#FF5C5C",
+    "#7CE38B",
+    "#F5E663",
+    "#5C9DFF",
+    "#FF4FA3",
+    "#3FE0D0",
+    "#C8CFE6",
+    "#3A4060",
+    "#FF8585",
+    "#A3F2AE",
+    "#FAF08F",
+    "#8AB8FF",
+    "#FF85C0",
+    "#7AF0E4",
+    "#F0F4FF"
+  ]
+}

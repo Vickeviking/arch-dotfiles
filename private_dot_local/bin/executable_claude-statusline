@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+"""Claude Code status line: machine · folder · git branch · model · context used.
+Colors come from the active desk-theme (~/.config/themes/current/colors.css)."""
+import json, os, re, socket, subprocess, sys
+
+def palette():
+    try:
+        css = open(os.path.expanduser("~/.config/themes/current/colors.css")).read()
+        return dict(re.findall(r"@define-color t-([\w]+)\s+#([0-9A-Fa-f]{6})", css))
+    except OSError:
+        return {}
+
+P = palette()
+
+def fg(role, text):
+    h = P.get(role)
+    if not h:
+        return text
+    r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    return f"\033[38;2;{r};{g};{b}m{text}\033[0m"
+
+try:
+    d = json.load(sys.stdin)
+except ValueError:
+    d = {}
+
+cwd = (d.get("workspace") or {}).get("current_dir") or os.getcwd()
+model = (d.get("model") or {}).get("display_name", "")
+pct = (d.get("context_window") or {}).get("used_percentage")
+
+branch = ""
+try:
+    branch = subprocess.run(["git", "-C", cwd, "branch", "--show-current"],
+                            capture_output=True, text=True, timeout=1).stdout.strip()
+except (OSError, subprocess.TimeoutExpired):
+    pass
+
+parts = [fg("muted", socket.gethostname()), fg("text", os.path.basename(cwd.rstrip("/")) or "/")]
+if branch:
+    parts.append(fg("accent2", " " + branch))
+if model:
+    parts.append(fg("accent", model))
+if pct is not None:
+    role = "ok" if pct < 50 else "accent" if pct < 80 else "alert"
+    parts.append(fg(role, f"{round(pct)}% ctx"))
+print(fg("muted", " · ").join(parts))

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# desk-camera: waybar JSON; shows a red camera icon while any process holds a /dev/video* device.
+users=""
+for dev in /dev/video*; do
+    [[ -e $dev ]] || continue
+    for pid in $(fuser "$dev" 2>/dev/null); do
+        users+="$(ps -o comm= -p "$pid" 2>/dev/null) "
+    done
+done
+users=$(printf '%s' "$users" | tr ' ' '\n' | sort -u | grep . | paste -sd, -)
+if [[ -n $users ]]; then
+    printf '{"text":"󰄀","tooltip":"Camera in use by: %s","class":"active"}\n' "$users"
+else
+    printf '{"text":"","tooltip":"","class":"idle"}\n'
+fi

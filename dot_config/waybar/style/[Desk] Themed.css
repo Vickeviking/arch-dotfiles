@@ -1,0 +1,121 @@
+/* ---- Desk Themed: three floating islands, colors from desk-theme ---- */
+/* Colors: ~/.config/themes/current/colors.css (switch with `desk-theme <name>`).
+   Pair with config "[TOP] Rain City". Not vertical-layout friendly. */
+
+@import '../../.config/themes/current/colors.css';
+
+* {
+    font-family: "JetBrainsMono Nerd Font Propo", "JetBrainsMono Nerd Font", monospace;
+    font-weight: 600;
+    font-size: 13.5px;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @t-text;
+}
+
+/* ---------- islands ---------- */
+.modules-left,
+.modules-center,
+.modules-right {
+    background: alpha(@t-surface, 0.86);
+    border: 1px solid alpha(@t-border, 0.9);
+    border-radius: 12px;
+    padding: 0 8px;
+}
+
+tooltip {
+    background: @t-panel;
+    border: 1px solid @t-border;
+    border-radius: 10px;
+}
+tooltip label { color: @t-text; font-weight: 500; }
+
+/* every module gets the same breathing room */
+.modules-left > widget > *,
+.modules-center > widget > *,
+.modules-right > widget > * {
+    padding: 0 7px;
+    margin: 5px 1px;
+    color: @t-text;
+}
+
+/* ---------- left ---------- */
+#workspaces { padding: 0 2px; }
+#workspaces button {
+    color: @t-muted;
+    background: transparent;
+    padding: 0 7px;
+    margin: 0 1px;
+    border-radius: 7px;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+#workspaces button:hover { background: alpha(@t-text, 0.08); color: @t-text; }
+#workspaces button.active {
+    background: @t-accent;
+    color: @t-surface;
+}
+#workspaces button.urgent { background: @t-alert; color: @t-surface; }
+#window { color: @t-muted; font-weight: 500; }
+window#waybar.empty #window { padding: 0; margin: 0; }
+#custom-menu { color: @t-accent; }
+
+/* ---------- center ---------- */
+#clock { color: @t-text; font-weight: 700; }
+#custom-playerctl { color: @t-muted; font-weight: 500; }
+#custom-playerctl.Playing { color: @t-accent2; }
+#custom-player_prev, #custom-player_toggle, #custom-player_next { color: @t-accent2; padding: 0 4px; }
+#custom-spektra { color: @t-accent2; }
+#custom-arcturon_server { color: @t-accent; }
+#custom-shutdown_timer { color: @t-muted; }
+
+/* ---------- right ---------- */
+#privacy { padding: 0 4px; }
+#privacy-item {
+    color: @t-surface;
+    background: @t-alert;
+    border-radius: 7px;
+    padding: 0 6px;
+    margin: 0 2px;
+}
+#custom-desk_camera.active {
+    color: @t-surface;
+    background: @t-alert;
+    border-radius: 7px;
+}
+#custom-desk_camera.idle { padding: 0; margin: 0; }
+
+#custom-desk_updates.pending { color: @t-accent; }
+#custom-desk_updates.vuln {
+    color: @t-surface;
+    background: @t-alert;
+    border-radius: 7px;
+}
+#custom-desk_updates.ok { padding: 0; margin: 0; }
+
+#network { color: @t-accent2; }
+#network.disconnected { color: @t-alert; }
+#pulseaudio { color: @t-text; }
+#pulseaudio.muted, #pulseaudio.source-muted { color: @t-muted; }
+#cpu, #memory, #temperature, #disk, #power-profiles-daemon { color: @t-muted; }
+#temperature.critical { color: @t-alert; }
+#battery { color: @t-ok; }
+#battery.warning { color: @t-accent; }
+#battery.critical:not(.charging) { color: @t-alert; }
+#backlight, #custom-night_light, #custom-battery_conservation { color: @t-muted; }
+#idle_inhibitor { color: @t-muted; }
+#idle_inhibitor.activated { color: @t-accent; }
+#custom-swaync, #custom-dot_update { color: @t-text; }
+#custom-power { color: @t-alert; padding-right: 9px; }
+#tray > .needs-attention { background: @t-alert; border-radius: 6px; }
+
+/* hover feedback for anything clickable */
+#custom-menu:hover, #custom-power:hover, #custom-desk_updates:hover,
+#custom-spektra:hover, #custom-arcturon_server:hover, #pulseaudio:hover, #network:hover {
+    background: alpha(@t-text, 0.08);
+    border-radius: 7px;
+}

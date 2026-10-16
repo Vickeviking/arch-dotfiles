@@ -1,0 +1,56 @@
+/* ---- 💫 https://github.com/JaKooLit 💫 ---- */
+
+// ### Rain City - three floating islands, colors from desk-theme (~/.config/themes/current/colors.css) ###
+// Pair with style "[Desk] Themed.css". Previous layout: "[TOP] Default Laptop".
+{
+"include": [
+  "$HOME/.config/waybar/Modules",
+  "$HOME/.config/waybar/ModulesWorkspaces",
+  "$HOME/.config/waybar/ModulesCustom",
+  "$HOME/.config/waybar/ModulesGroups",
+  "$HOME/.config/waybar/UserModules",
+  ],
+"layer": "top",
+"exclusive": true,
+"passthrough": false,
+"position": "top",
+"height": 34,
+"spacing": 4,
+"fixed-center": true,
+"ipc": true,
+"margin-top": 8,
+"margin-left": 10,
+"margin-right": 10,
+"margin-bottom": 0,
+
+"modules-left": [
+	"group/app_drawer",
+	"hyprland/workspaces#rw",
+	"hyprland/window",
+	],
+
+"modules-center": [
+	"custom/player_prev",
+	"custom/player_toggle",
+	"custom/player_next",
+	"custom/playerctl",
+	"clock",
+	"custom/spektra",
+	"custom/arcturon_server",
+	"custom/shutdown_timer",
+	],
+
+"modules-right": [
+	"privacy",
+	"custom/desk_camera",
+	"custom/desk_updates",
+	"tray",
+	"network#speed",
+	"group/audio",
+	"group/mobo_drawer",
+	"group/desk_laptop",
+	"idle_inhibitor",
+	"group/notify",
+	"custom/power",
+	],
+}

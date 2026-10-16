@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# desk-updates: waybar JSON for pending updates + known-vulnerable packages.
+#   class "ok"   nothing pending (module hidden by CSS)
+#   class "pending" updates waiting
+#   class "vuln"    arch-audit reports a fixed vulnerability you haven't installed yet
+#   desk-updates --list   human-readable list (used by the click action)
+
+updates=$(checkupdates 2>/dev/null)
+count=$(printf '%s' "$updates" | grep -c .)
+
+vuln=""
+if command -v arch-audit >/dev/null; then
+    vuln=$(arch-audit -u 2>/dev/null)   # -u: only issues already fixed upstream (an update helps)
+fi
+vcount=$(printf '%s' "$vuln" | grep -c .)
+
+if [[ $1 == --list ]]; then
+    echo "== $count pending updates"; printf '%s\n' "$updates"
+    if command -v arch-audit >/dev/null; then
+        echo; echo "== $vcount vulnerable packages with a fix available"; printf '%s\n' "$vuln"
+    else
+        echo; echo "(install arch-audit to also see known vulnerabilities: sudo pacman -S arch-audit)"
+    fi
+    echo; echo "Update with: sudo pacman -Syu   (reboot afterwards if the kernel changed)"
+    exit 0
+fi
+
+json_escape() { python3 -I -c 'import json,sys; print(json.dumps(sys.stdin.read())[1:-1])'; }
+
+if (( vcount > 0 )); then
+    cls=vuln; text="󰒃 $count"
+elif (( count > 0 )); then
+    cls=pending; text="󰚰 $count"
+else
+    cls=ok; text=""
+fi
+tip=$(printf '%s pending updates\n%s vulnerable packages (fix available)\n\nClick: show the list' "$count" "$vcount" | json_escape)
+printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' "$text" "$tip" "$cls"

@@ -177,6 +177,7 @@ apply_image_wallpaper() {
   # Run additional scripts
   "$SCRIPTSDIR/WallustSwww.sh" "$image_path"
   sleep 2
+  "$HOME/.local/bin/desk-theme" --refresh  # re-derives colors only when 'wallpaper' theme is active
   "$SCRIPTSDIR/Refresh.sh"
   sleep 1
 

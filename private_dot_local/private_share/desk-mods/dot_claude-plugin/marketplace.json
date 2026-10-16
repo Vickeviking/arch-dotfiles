@@ -1,0 +1,7 @@
+{
+  "name": "desk-mods",
+  "owner": { "name": "Viktor Liljenberg" },
+  "plugins": [
+    { "name": "rain-city", "source": "./plugins/rain-city", "description": "Desk status band, long-turn chime + toast, and /desk-theme" }
+  ]
+}

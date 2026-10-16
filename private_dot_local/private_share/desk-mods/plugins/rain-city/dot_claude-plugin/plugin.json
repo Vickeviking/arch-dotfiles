@@ -1,0 +1,6 @@
+{
+  "name": "rain-city",
+  "version": "0.1.0",
+  "description": "Desk status band above the prompt, a chime + toast after long turns, and /desk-theme",
+  "types": "./types/index.d.ts"
+}
