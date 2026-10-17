@@ -5,7 +5,7 @@ return {
 	ft = { "rust" }, -- lazy load on rust filetype
 	priority = 1000, -- Load before other LSP plugins
 	dependencies = {
-		"hrsh7th/cmp-nvim-lsp",
+		"saghen/blink.cmp",
 		"mason-org/mason.nvim", -- Need mason-registry for rust-analyzer path
 		-- rustaceanvim does NOT require nvim-lspconfig or mason,
 		-- but your setup uses them for other langs which is fine.
@@ -13,8 +13,11 @@ return {
 	init = function()
 		-- CRITICAL: Disable built-in rust-analyzer BEFORE anything else
 		-- Neovim 0.11+ has rust-analyzer in its default configs
-		local ok, configs = pcall(require, "lspconfig.configs")
-		if ok and configs.rust_analyzer then
+		-- Only if lspconfig is already loaded: requiring it here pulled lspconfig
+		-- (and its dependencies) into every startup for ~20 ms. core/init.lua
+		-- already disables rust_analyzer through vim.lsp.config.
+		local configs = package.loaded["lspconfig.configs"]
+		if configs and configs.rust_analyzer then
 			configs.rust_analyzer = nil
 		end
 		
@@ -144,7 +147,7 @@ return {
 					vim.w._rt_expanded_buf = exp_buf
 
 					local opts = { buffer = exp_buf, silent = true, nowait = true }
-					vim.keymap.set("n", "<leader>mx", expand_macro_toggle_same_win, vim.tbl_extend("force", opts, {
+					vim.keymap.set("n", "<leader>Rm", expand_macro_toggle_same_win, vim.tbl_extend("force", opts, {
 						desc = "Rust: return from macro expansion",
 					}))
 					vim.keymap.set("n", "q", expand_macro_toggle_same_win, vim.tbl_extend("force", opts, {
@@ -175,16 +178,26 @@ return {
 			-- Code actions
 			map("<leader>ca", vim.lsp.buf.code_action, "Rust: code actions")
 
-			-- Macro expand toggle (your old <leader>mx)
-			map("<leader>mx", expand_macro_toggle_same_win, "Rust: macro expand (toggle in-place)")
-
-			-- Runnables / Testables (nice extras)
-			map("<leader>rr", function()
+			-- Rust group, Space R (2026-10-17; was <leader>mx / rr / rt). Listed in the deck.
+			map("<leader>Rm", expand_macro_toggle_same_win, "Rust: macro expand (toggle in place)")
+			map("<leader>Rr", function()
 				vim.cmd.RustLsp("runnables")
-			end, "Rust: runnables")
-			map("<leader>rt", function()
+			end, "Rust: runnables (pick something to run)")
+			map("<leader>Rt", function()
 				vim.cmd.RustLsp("testables")
-			end, "Rust: testables")
+			end, "Rust: testables (pick a test to run)")
+			map("<leader>Re", function()
+				vim.cmd.RustLsp("explainError")
+			end, "Rust: explain the error code here")
+			map("<leader>Rd", function()
+				vim.cmd.RustLsp("renderDiagnostic")
+			end, "Rust: full compiler diagnostic, as cargo prints it")
+			map("<leader>Rp", function()
+				vim.cmd.RustLsp("parentModule")
+			end, "Rust: go to parent module")
+			map("<leader>Rc", function()
+				vim.cmd.RustLsp("openCargo")
+			end, "Rust: open Cargo.toml")
 		end
 
 		-- Apply the keymaps on LSP attach for Rust buffers only.

@@ -59,6 +59,18 @@ Examples: `ci"` change the string, `da(` delete a call's arguments with the pare
 | `ds (` | delete surrounding parentheses |
 | `S )` in visual | surround the selection |
 
+## Completion (blink) and AI (codeium)
+
+| Keys (insert mode) | Does |
+| ------------------ | ---- |
+| `C-Space` | show completions (the menu stays hidden until you ask) |
+| `C-j` / `C-k` | next / previous suggestion |
+| `Tab` | accept the suggestion, or jump to the next snippet field |
+| `C-e` | close the menu |
+| `C-l` / `C-h` | scroll the documentation panel |
+| `S-Tab` | accept codeium's grey ghost text (menu closed) |
+| `Space wn` (normal) | switch codeium: ghost text only ↔ menu pops up while typing |
+
 ## Search and replace
 
 | Keys | Does |
@@ -91,6 +103,16 @@ Examples: `ci"` change the string, `da(` delete a call's arguments with the pare
 | `Space bn` / `Space bp` | next / previous buffer |
 | `Space ee` | file tree |
 | `Space ff` / `Space fr` | find file / recent files |
+
+## Opening files
+
+| Keys / file | Does |
+| ----------- | ---- |
+| `Space ff` / `Space fr` | find a file / a recent file |
+| `gx` | open the path or URL under the cursor in its app |
+| a `.pdf` | opens in zathura, nvim goes back to your file |
+| a video | opens in the default player |
+| an image | shown inside nvim (kitty) |
 
 ## Marks, registers, macros
 

@@ -42,6 +42,8 @@ return {
 					"jsonls",
 					"yamlls",
 					"stylelint_lsp",
+					"lua_ls",
+					"gopls",
 				},
 				automatic_enable = false,
 			})

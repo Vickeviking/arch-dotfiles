@@ -7,13 +7,12 @@ return {
 		-- Prefer the new org:
 		"mason-org/mason.nvim",
 		"mason-org/mason-lspconfig.nvim",
-		"hrsh7th/cmp-nvim-lsp",
+		"saghen/blink.cmp",
 		{ "antosha417/nvim-lsp-file-operations", config = true },
-		{ "folke/neodev.nvim", opts = {} },
 	},
 	config = function()
 		local mason_lsp = require("mason-lspconfig")
-		local caps = require("cmp_nvim_lsp").default_capabilities()
+		local caps = require("blink.cmp").get_lsp_capabilities()
 		local eslint_on_attach = vim.lsp.config.eslint and vim.lsp.config.eslint.on_attach
 
 		-- Diagnostics UI
@@ -132,13 +131,15 @@ return {
 			"jsonls",
 			"yamlls",
 			"stylelint_lsp",
+			"lua_ls", -- this config (lazydev adds the nvim API types)
+			"gopls",
 		}
 
 		-- Per-server handlers
 		local handlers = {}
 
 		handlers["clangd"] = function()
-			local clang_caps = require("cmp_nvim_lsp").default_capabilities()
+			local clang_caps = require("blink.cmp").get_lsp_capabilities()
 			clang_caps.offsetEncoding = { "utf-16" }
 			setup_server("clangd", {
 				capabilities = clang_caps,

@@ -5,7 +5,7 @@ return {
 	event = "InsertEnter",
 
 	--------------------------------------------------------------------
-	-- defaults: start in MULTI‑LINE (ghost text on, cmp popup off)
+	-- defaults: start in MULTI‑LINE (ghost text on, completion popup off)
 	--------------------------------------------------------------------
 	opts = {
 		enable_cmp_source = false,
@@ -19,9 +19,9 @@ return {
 
 	config = function(_, opts)
 		local codeium = require("codeium")
-		local cmp = require("cmp")
 		codeium.setup(opts) -- initial multi‑line
-		cmp.setup({ completion = { autocomplete = false } })
+		-- blink.lua reads this flag to decide whether its menu pops up while typing
+		vim.g.vango_completion_popup = false
 
 		-- keep the original virtual‑text settings handy for re‑use
 		local vt_cfg = opts.virtual_text
@@ -38,12 +38,12 @@ return {
 			if mode == "multi" then
 				new_opts.virtual_text = vim.tbl_extend("force", vt_cfg, { enabled = true })
 				new_opts.suggestion = { accept_word = false, accept_line = false }
-				cmp.setup({ completion = { autocomplete = false } })
+				vim.g.vango_completion_popup = false
 				vim.notify("Codeium → Multi‑line · ghost ON · popup OFF")
 			else -- "line"
 				new_opts.virtual_text = vim.tbl_extend("force", vt_cfg, { enabled = false })
 				new_opts.suggestion = { accept_word = false, accept_line = true }
-				cmp.setup({ completion = { autocomplete = { cmp.TriggerEvent.TextChanged } } })
+				vim.g.vango_completion_popup = true
 				vim.notify("Codeium → Single‑line · ghost OFF · popup ON")
 			end
 

@@ -18,7 +18,7 @@
 | `cargo update -p crate` | bump one dependency in the lockfile |
 | `cargo clean` | wipe `target/` (it gets big: Arcturon's was 186 GB) |
 
-From nvim: `Space ob` build · `Space or` run · `Space ot` test · `Space tn` nearest test · `Space tf` file tests · `Space Rr` runnables · `Space Rt` testables.
+From nvim: `Space ob` build · `Space or` run · `Space ot` test · `Space tn` nearest test · `Space tf` file tests · `Space Rr` runnables · `Space Rt` testables · `Space Rc` open Cargo.toml · `Space Rp` parent module.
 
 ## Seeing what the compiler did
 
