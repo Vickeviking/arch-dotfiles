@@ -309,7 +309,8 @@ local function method_row(lines, hls, targets, m)
     or RECV[m.recv or ""]
     or { "assoc", "LensRecvNone" }
   local row = #lines
-  local line = (" %-10s %s"):format(r[1], m.sig)
+  -- as inline code, so markdown leaves `[u8; 11]` and friends alone
+  local line = (" %-10s `%s`"):format(r[1], m.sig)
   table.insert(lines, line)
   table.insert(hls, { row, 1, 1 + #r[1], r[2] })
   targets[row] = m.loc
@@ -361,7 +362,8 @@ local function tab_traits()
   table.sort(traits, function(a, b)
     return a.trait < b.trait
   end)
-  table.insert(lines, ("## Implemented traits (%d)"):format(#traits))
+  -- on a trait these are the types implementing it; on a type, the traits it implements
+  table.insert(lines, ((state.kind == "trait") and "## Implementors (%d)" or "## Implemented traits (%d)"):format(#traits))
   table.insert(lines, "")
   for _, impl in ipairs(traits) do
     local row = #lines

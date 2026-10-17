@@ -68,9 +68,18 @@ return {
 				-- rustup's rust-analyzer: it matches the installed rustc, so it can compute
 				-- memory layouts (size/align on K, and the lens). Mason's standalone build
 				-- (0.3.2854) couldn't (checked 2026-10-17). Mason's stays as a fallback.
+				-- Mason puts its own bin first on PATH, so pick rustup's by path, not exepath.
 				cmd = {
-					vim.fn.exepath("rust-analyzer") ~= "" and vim.fn.exepath("rust-analyzer")
-						or (vim.fn.stdpath("data") .. "/mason/bin/rust-analyzer"),
+					(function()
+						local mason = vim.fn.stdpath("data") .. "/mason/bin/rust-analyzer"
+						for _, p in ipairs({ "/usr/lib/rustup/bin/rust-analyzer", vim.fn.expand("~/.cargo/bin/rust-analyzer") }) do
+							if vim.fn.executable(p) == 1 then
+								return p
+							end
+						end
+						local found = vim.fn.exepath("rust-analyzer")
+						return (found ~= "" and found ~= mason) and found or mason
+					end)(),
 				},
 				settings = {
 					["rust-analyzer"] = {
