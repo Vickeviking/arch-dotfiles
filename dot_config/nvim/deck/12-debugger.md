@@ -24,6 +24,7 @@ Build without `--release` (or set `debug = true` in the release profile), or var
 | `Space dq` | stop debugging |
 | `Space dx` | X-ray: the full memory map (stack, heap, who points where) |
 | `Space dm` | X-ray sidebar show / hide |
+| `Space dW` | X-ray window open / close (opens by itself on a second monitor) |
 | `Space dX` | X-ray off for this nvim (inline notes, sidebar, Why not? hints); on again next start |
 
 Inside dap-view: the letters in its top bar switch sections, `g?` lists its keys.
@@ -72,6 +73,8 @@ Crates read the way you'd say them, not as their internals:
 | ConcurrentHashMap ports | bins, entries, `Moved` forwarding mid-resize |
 
 Any other crate reads as its fields, tidied. For your own types add a lens in `~/.config/xray/lenses.toml` (examples inside); it's read at every stop.
+
+**The window** (`xray-window`) is the memory map drawn properly: frames as cards, heap blocks in columns by depth, curved arrows, a timeline of stops. With a second monitor connected it opens there by itself at the first stop and leaves focus in nvim. Its keys: `h`/`l` stops, `j`/`k` scroll, `f` follow live, `d` changes on/off, `?` keys, `q` close.
 
 `Space dx` opens the full panel. Its tabs:
 - **Memory**: frames as cards on the left, heap blocks as boxes on the right, arrows between them. Boxes that point at each other name each other by letter.

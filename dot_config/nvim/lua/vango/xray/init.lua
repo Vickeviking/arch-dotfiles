@@ -8,6 +8,7 @@
 
 local inline = require("vango.xray.inline")
 local sidebar = require("vango.xray.sidebar")
+local window = require("vango.xray.window")
 local panel = require("vango.xray.panel")
 local theme = require("vango.xray.theme")
 
@@ -65,6 +66,9 @@ local function read_graph()
     local last = state.history[#state.history]
     if not last or last.stop ~= g.stop then
       table.insert(state.history, g)
+    end
+    if #state.history == 1 and state.inline then
+      window.auto() -- the session's first stop: the second screen, if there is one
     end
     state.view = nil -- a new stop: back to live
     redraw()
@@ -139,6 +143,10 @@ function M.toggle_inline()
   end
   redraw()
   vim.notify(state.inline and "X-ray on" or "X-ray off for this nvim (it's on again next time)", vim.log.levels.INFO)
+end
+
+function M.toggle_window()
+  window.toggle()
 end
 
 function M.toggle_sidebar()

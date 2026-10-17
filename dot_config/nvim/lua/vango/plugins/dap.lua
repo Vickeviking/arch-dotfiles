@@ -55,6 +55,7 @@ return {
 			{ "<leader>dx", function() require("vango.xray").toggle_panel() end, desc = "X-ray: memory map (stack, heap, pointers)" },
 			{ "<leader>dX", function() require("vango.xray").toggle_inline() end, desc = "X-ray: all automatic views off/on (this nvim)" },
 			{ "<leader>dm", function() require("vango.xray").toggle_sidebar() end, desc = "X-ray: memory sidebar show/hide" },
+			{ "<leader>dW", function() require("vango.xray").toggle_window() end, desc = "X-ray: window (second screen) open/close" },
 		},
 		config = function()
 			local function colors()
