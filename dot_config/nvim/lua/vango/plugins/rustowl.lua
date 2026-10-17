@@ -23,6 +23,8 @@ return {
 				outlive = p.alert, -- a borrow that outlives the value: the error
 			},
 			client = {
+				-- absolute path: nvim started from a launcher doesn't get zsh's PATH
+				cmd = { vim.fn.executable(vim.fn.expand("~/.local/bin/rustowl")) == 1 and vim.fn.expand("~/.local/bin/rustowl") or "rustowl" },
 				on_attach = function(_, buffer)
 					vim.keymap.set("n", "<leader>Ro", function()
 						require("rustowl").toggle(buffer)
