@@ -59,7 +59,7 @@ let words = vec![…];         ↷ moved into taken
 - **Heap**: each block's address, size, contents and who points at it.
 - **Changes**: what this step did and why it matters.
 
-Enter jumps to the declaration or frame. Borrows don't exist at run time (references are plain pointers), so X-ray shows who points where. Why the compiler refuses something is a compile-time question; that's coming as `Space Rw`.
+Enter jumps to the declaration or frame. `[` / `]` step back and forward through every stop of the session (a TIMELINE strip on top shows where you are; reallocations are amber); inline notes stay on the live stop. Borrows don't exist at run time (references are plain pointers), so X-ray shows who points where. Why the compiler refuses something is a compile-time question: `Space Rw` on the error (see Ownership).
 
 ## A first session
 

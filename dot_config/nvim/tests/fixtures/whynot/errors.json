@@ -1,0 +1,274 @@
+[
+ {
+  "code": "E0502",
+  "message": "cannot borrow `v` as mutable because it is also borrowed as immutable",
+  "labels": [
+   {
+    "line": 6,
+    "col": 4,
+    "end_line": 6,
+    "end_col": 13,
+    "text": "mutable borrow occurs here",
+    "primary": true
+   },
+   {
+    "line": 5,
+    "col": 17,
+    "end_line": 5,
+    "end_col": 18,
+    "text": "immutable borrow occurs here",
+    "primary": false
+   },
+   {
+    "line": 7,
+    "col": 15,
+    "end_line": 7,
+    "end_col": 20,
+    "text": "immutable borrow later used here",
+    "primary": false
+   }
+  ],
+  "helps": [],
+  "rendered": "error[E0502]: cannot borrow `v` as mutable because it is also borrowed as immutable\n --> src/main.rs:7:5\n  |\n6 |     let first = &v[0];\n  |                  - immutable borrow occurs here\n7 |     v.push(4);\n  |     ^^^^^^^^^ mutable borrow occurs here\n8 |     println!(\"{first}\");\n  |                ----- immutable borrow later used here\n\n"
+ },
+ {
+  "code": "E0499",
+  "message": "cannot borrow `s` as mutable more than once at a time",
+  "labels": [
+   {
+    "line": 12,
+    "col": 12,
+    "end_line": 12,
+    "end_col": 18,
+    "text": "first mutable borrow occurs here",
+    "primary": false
+   },
+   {
+    "line": 13,
+    "col": 12,
+    "end_line": 13,
+    "end_col": 18,
+    "text": "second mutable borrow occurs here",
+    "primary": true
+   },
+   {
+    "line": 14,
+    "col": 4,
+    "end_line": 14,
+    "end_col": 5,
+    "text": "first borrow later used here",
+    "primary": false
+   }
+  ],
+  "helps": [],
+  "rendered": "error[E0499]: cannot borrow `s` as mutable more than once at a time\n  --> src/main.rs:14:13\n   |\n13 |     let a = &mut s;\n   |             ------ first mutable borrow occurs here\n14 |     let b = &mut s;\n   |             ^^^^^^ second mutable borrow occurs here\n15 |     a.push('x');\n   |     - first borrow later used here\n\n"
+ },
+ {
+  "code": "E0382",
+  "message": "borrow of moved value: `name`",
+  "labels": [
+   {
+    "line": 20,
+    "col": 16,
+    "end_line": 20,
+    "end_col": 20,
+    "text": "value moved here",
+    "primary": false
+   },
+   {
+    "line": 21,
+    "col": 15,
+    "end_line": 21,
+    "end_col": 19,
+    "text": "value borrowed here after move",
+    "primary": true
+   },
+   {
+    "line": 19,
+    "col": 8,
+    "end_line": 19,
+    "end_col": 12,
+    "text": "move occurs because `name` has type `String`, which does not implement the `Copy` trait",
+    "primary": false
+   }
+  ],
+  "helps": [
+   "consider cloning the value if the performance cost is acceptable"
+  ],
+  "rendered": "error[E0382]: borrow of moved value: `name`\n  --> src/main.rs:22:16\n   |\n20 |     let name = String::from(\"li\");\n   |         ---- move occurs because `name` has type `String`, which does not implement the `Copy` trait\n21 |     let taken = name;\n   |                 ---- value moved here\n22 |     println!(\"{name} {taken}\");\n   |                ^^^^ value borrowed here after move\n   |\nhelp: consider cloning the value if the performance cost is acceptable\n   |\n21 |     let taken = name.clone();\n   |                     ++++++++\n\n"
+ },
+ {
+  "code": "E0505",
+  "message": "cannot move out of `v` because it is borrowed",
+  "labels": [
+   {
+    "line": 27,
+    "col": 16,
+    "end_line": 27,
+    "end_col": 17,
+    "text": "move out of `v` occurs here",
+    "primary": true
+   },
+   {
+    "line": 26,
+    "col": 12,
+    "end_line": 26,
+    "end_col": 14,
+    "text": "borrow of `v` occurs here",
+    "primary": false
+   },
+   {
+    "line": 25,
+    "col": 8,
+    "end_line": 25,
+    "end_col": 9,
+    "text": "binding `v` declared here",
+    "primary": false
+   },
+   {
+    "line": 28,
+    "col": 15,
+    "end_line": 28,
+    "end_col": 16,
+    "text": "borrow later used here",
+    "primary": false
+   }
+  ],
+  "helps": [
+   "consider cloning the value if the performance cost is acceptable"
+  ],
+  "rendered": "error[E0505]: cannot move out of `v` because it is borrowed\n  --> src/main.rs:28:17\n   |\n26 |     let v = vec![1];\n   |         - binding `v` declared here\n27 |     let r = &v;\n   |             -- borrow of `v` occurs here\n28 |     let moved = v;\n   |                 ^ move out of `v` occurs here\n29 |     println!(\"{r:?} {moved:?}\");\n   |                - borrow later used here\n   |\nhelp: consider cloning the value if the performance cost is acceptable\n   |\n27 |     let r = &v.clone();\n   |               ++++++++\n\n"
+ },
+ {
+  "code": "E0506",
+  "message": "cannot assign to `n` because it is borrowed",
+  "labels": [
+   {
+    "line": 33,
+    "col": 12,
+    "end_line": 33,
+    "end_col": 14,
+    "text": "`n` is borrowed here",
+    "primary": false
+   },
+   {
+    "line": 34,
+    "col": 4,
+    "end_line": 34,
+    "end_col": 9,
+    "text": "`n` is assigned to here but it was already borrowed",
+    "primary": true
+   },
+   {
+    "line": 35,
+    "col": 15,
+    "end_line": 35,
+    "end_col": 16,
+    "text": "borrow later used here",
+    "primary": false
+   }
+  ],
+  "helps": [],
+  "rendered": "error[E0506]: cannot assign to `n` because it is borrowed\n  --> src/main.rs:35:5\n   |\n34 |     let r = &n;\n   |             -- `n` is borrowed here\n35 |     n = 2;\n   |     ^^^^^ `n` is assigned to here but it was already borrowed\n36 |     println!(\"{r}\");\n   |                - borrow later used here\n\n"
+ },
+ {
+  "code": "E0597",
+  "message": "`short` does not live long enough",
+  "labels": [
+   {
+    "line": 42,
+    "col": 12,
+    "end_line": 42,
+    "end_col": 18,
+    "text": "borrowed value does not live long enough",
+    "primary": true
+   },
+   {
+    "line": 43,
+    "col": 4,
+    "end_line": 43,
+    "end_col": 5,
+    "text": "`short` dropped here while still borrowed",
+    "primary": false
+   },
+   {
+    "line": 41,
+    "col": 12,
+    "end_line": 41,
+    "end_col": 17,
+    "text": "binding `short` declared here",
+    "primary": false
+   },
+   {
+    "line": 44,
+    "col": 15,
+    "end_line": 44,
+    "end_col": 16,
+    "text": "borrow later used here",
+    "primary": false
+   }
+  ],
+  "helps": [],
+  "rendered": "error[E0597]: `short` does not live long enough\n  --> src/main.rs:43:13\n   |\n42 |         let short = 5;\n   |             ----- binding `short` declared here\n43 |         r = &short;\n   |             ^^^^^^ borrowed value does not live long enough\n44 |     }\n   |     - `short` dropped here while still borrowed\n45 |     println!(\"{r}\");\n   |                - borrow later used here\n\n"
+ },
+ {
+  "code": "E0716",
+  "message": "temporary value dropped while borrowed",
+  "labels": [
+   {
+    "line": 49,
+    "col": 9,
+    "end_line": 49,
+    "end_col": 29,
+    "text": "creates a temporary value which is freed while still in use",
+    "primary": true
+   },
+   {
+    "line": 49,
+    "col": 29,
+    "end_line": 49,
+    "end_col": 30,
+    "text": "temporary value is freed at the end of this statement",
+    "primary": false
+   },
+   {
+    "line": 50,
+    "col": 15,
+    "end_line": 50,
+    "end_col": 16,
+    "text": "borrow later used here",
+    "primary": false
+   }
+  ],
+  "helps": [
+   "consider using a `let` binding to create a longer lived value"
+  ],
+  "rendered": "error[E0716]: temporary value dropped while borrowed\n  --> src/main.rs:50:10\n   |\n50 |     s = &String::from(\"temp\");\n   |          ^^^^^^^^^^^^^^^^^^^^- temporary value is freed at the end of this statement\n   |          |\n   |          creates a temporary value which is freed while still in use\n51 |     println!(\"{s}\");\n   |                - borrow later used here\n   |\nhelp: consider using a `let` binding to create a longer lived value\n   |\n50 ~     let binding = String::from(\"temp\");\n51 ~     s = &binding;\n   |\n\n"
+ },
+ {
+  "code": "E0373",
+  "message": "closure may outlive the current function, but it borrows `data`, which is owned by the current function",
+  "labels": [
+   {
+    "line": 55,
+    "col": 37,
+    "end_line": 55,
+    "end_col": 41,
+    "text": "`data` is borrowed here",
+    "primary": false
+   },
+   {
+    "line": 55,
+    "col": 23,
+    "end_line": 55,
+    "end_col": 25,
+    "text": "may outlive borrowed value `data`",
+    "primary": true
+   }
+  ],
+  "helps": [
+   "to force the closure to take ownership of `data` (and any other referenced variables), use the `move` keyword"
+  ],
+  "rendered": "error[E0373]: closure may outlive the current function, but it borrows `data`, which is owned by the current function\n  --> src/main.rs:56:24\n   |\n56 |     std::thread::spawn(|| println!(\"{data:?}\"))\n   |                        ^^            ---- `data` is borrowed here\n   |                        |\n   |                        may outlive borrowed value `data`\n   |\nnote: function requires argument type to outlive `'static`\n  --> src/main.rs:56:5\n   |\n56 |     std::thread::spawn(|| println!(\"{data:?}\"))\n   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nhelp: to force the closure to take ownership of `data` (and any other referenced variables), use the `move` keyword\n   |\n56 |     std::thread::spawn(move || println!(\"{data:?}\"))\n   |                        ++++\n\n"
+ }
+]

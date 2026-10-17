@@ -20,6 +20,8 @@ local state = {
   mtime = 0,
   ended = false,
   watcher = nil,
+  history = {}, -- every stop's graph this session, oldest first
+  view = nil, -- index into history while scrubbing; nil = the live stop
 }
 
 local function dap_view_text(on)
@@ -58,6 +60,11 @@ local function read_graph()
   local ok, g = pcall(vim.json.decode, text, { luanil = { object = true, array = true } })
   if ok and type(g) == "table" and g.slots then
     state.mtime, state.graph = mt, g
+    local last = state.history[#state.history]
+    if not last or last.stop ~= g.stop then
+      table.insert(state.history, g)
+    end
+    state.view = nil -- a new stop: back to live
     redraw()
   end
 end
@@ -92,8 +99,27 @@ local function watch()
   end
 end
 
+-- what the panel shows: the live stop, or an earlier one while scrubbing
 function M.graph()
-  return state.graph, { ended = state.ended }
+  local n = #state.history
+  local g = state.view and state.history[state.view] or state.graph
+  return g, { ended = state.ended, index = state.view or n, count = n, history = state.history, live = state.view == nil }
+end
+
+-- step through the session's stops in the panel (inline notes stay live)
+function M.scrub(delta)
+  local n = #state.history
+  if n == 0 then
+    return
+  end
+  local i = math.max(1, math.min(n, (state.view or n) + delta))
+  -- (not `i == n and nil or i`: that can never be nil)
+  if i == n then
+    state.view = nil
+  else
+    state.view = i
+  end
+  panel.refresh()
 end
 
 function M.toggle_inline()
@@ -123,6 +149,7 @@ function M.setup()
   L.after.event_initialized["xray"] = function()
     state.started = os.time() - 1
     state.graph, state.mtime, state.ended = nil, 0, false
+    state.history, state.view = {}, nil
     watch()
   end
   L.after.event_stopped["xray"] = function()
@@ -148,6 +175,11 @@ end
 -- tests and demos: show a graph without a debug session
 function M._show(g)
   state.graph, state.ended, state.started = g, false, 0
+  local last = state.history[#state.history]
+  if not last or last.stop ~= g.stop then
+    table.insert(state.history, g)
+  end
+  state.view = nil
   redraw()
 end
 

@@ -236,6 +236,9 @@ return {
 			map("<leader>Rc", function()
 				vim.cmd.RustLsp("openCargo")
 			end, "Rust: open Cargo.toml")
+			map("<leader>Rw", function()
+				require("vango.xray.whynot").open()
+			end, "Rust: why not? the borrow error here as a timeline")
 		end
 
 		-- lens: keep recorded layouts fresh on save (only crates that have them)

@@ -101,6 +101,31 @@ local function tab_memory()
     return b.done()
   end
   local fi = frame_info(g)
+  if info and info.count and info.count > 1 then
+    -- the session's stops: [ / ] steps through them, the current one boxed
+    local segs = { { "TIMELINE  ", "XrayHead" } }
+    local first = math.max(1, info.index - 12)
+    if first > 1 then
+      segs[#segs + 1] = { "… ", "XrayFaint" }
+    end
+    for i = first, math.min(info.count, first + 24) do
+      local h = info.history[i]
+      local hot = false
+      for _, n in ipairs(h.notes or {}) do
+        hot = hot or n.kind == "realloc"
+      end
+      local label = tostring(h.stop)
+      if i == info.index then
+        segs[#segs + 1] = { " " .. label .. " ", "XrayLabel" }
+      else
+        segs[#segs + 1] = { " " .. label .. " ", hot and "XrayWarn" or "XrayDim" }
+      end
+    end
+    segs[#segs + 1] = { info.live and "   live" or "   looking back", info.live and "XrayOk" or "XrayWarn" }
+    segs[#segs + 1] = { "   [ ] step through stops", "XrayFaint" }
+    b.add(segs)
+    b.blank()
+  end
   b.add(map.legend())
   b.blank()
   local lines, hls, rows = map.render(g, { width = panel.width or 110, moved = fi.moved })
@@ -420,6 +445,7 @@ local HELP = {
   "  j/k        tabs (in the rail) or scroll (in the content)",
   "  C-l / C-h  into the content / back to the rail",
   "  Enter      jump to the declaration, frame or line",
+  "  [ / ]      step back / forward through this session's stops",
   "  Space dx   close",
   "",
   "  ─▶ owns   ═▶ shares (Rc/Arc)   ┄▶ weak   ─▷ borrows   ━▶ borrows mut",
@@ -443,12 +469,23 @@ local function title()
   if not g then
     return "X-ray"
   end
-  return "X-ray · stop " .. g.stop .. " · " .. g.reason .. ((info and info.ended) and " · session ended" or "")
+  local where = (info and not info.live) and (" · looking back (" .. info.index .. " of " .. info.count .. ")") or ""
+  return "X-ray · stop " .. g.stop .. " · " .. g.reason .. where .. ((info and info.ended) and " · session ended" or "")
 end
 
 local function ensure()
   if not panel then
-    panel = require("vango.deck.ui").new({ id = "xray", title = "X-ray", icon = "󰈈", tabs = tabs(), help_lines = HELP })
+    panel = require("vango.deck.ui").new({
+      id = "xray",
+      title = "X-ray",
+      icon = "󰈈",
+      tabs = tabs(),
+      help_lines = HELP,
+      keys = {
+        { "[", function() require("vango.xray").scrub(-1) end, "X-ray: the stop before" },
+        { "]", function() require("vango.xray").scrub(1) end, "X-ray: the stop after" },
+      },
+    })
   end
   return panel
 end
