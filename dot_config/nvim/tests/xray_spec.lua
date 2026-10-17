@@ -159,3 +159,36 @@ describe("xray history", function()
     assert.is_true(info.live, "the last stop is live again")
   end)
 end)
+
+describe("xray compact map (sidebar)", function()
+  it("fits every recorded stop in a narrow column", function()
+    for n = 1, 12 do
+      for _, w in ipairs({ 44, 58, 72 }) do
+        local lines = map.render_compact(graph(n), { width = w })
+        for _, l in ipairs(lines) do
+          assert.is_true(vim.fn.strdisplaywidth(l) <= w, ("stop %d width %d: %q"):format(n, w, l))
+        end
+      end
+    end
+  end)
+  it("writes heap pointers as letters", function()
+    local lines = map.render_compact(graph(1), { width = 58 })
+    local _, v = find(lines, "│ v ")
+    assert.truthy(v:find("─▶ A", 1, true))
+    assert.truthy(find(lines, "─▷ A[2]"), "third borrows into A")
+  end)
+end)
+
+describe("hints", function()
+  it("offers the lens on a Rust symbol and nothing odd elsewhere", function()
+    local hints = require("vango.hints")
+    local b = vim.fn.bufadd(dir .. "zoo.rs")
+    vim.fn.bufload(b)
+    vim.api.nvim_set_current_buf(b)
+    vim.bo[b].filetype = "rust"
+    vim.api.nvim_win_set_cursor(0, { 28, 8 }) -- on `v` in `let v`
+    local keys = vim.tbl_map(function(i) return i[1] end, hints.items())
+    assert.truthy(vim.tbl_contains(keys, "K K"))
+    assert.truthy(hints.statusline():find("VangoHintKey", 1, true))
+  end)
+end)

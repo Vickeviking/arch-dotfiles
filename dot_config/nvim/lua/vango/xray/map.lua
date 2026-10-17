@@ -813,6 +813,140 @@ function M.render(g, opts)
   return lines, hls, by_row, labels
 end
 
+-- Narrow layout for the sidebar: the stack card on top, heap boxes stacked
+-- under it, and heap pointers written as `─▶ A` instead of routed arrows.
+function M.render_compact(g, opts)
+  opts = opts or {}
+  local W = math.max(40, opts.width or 60)
+  local cards = M.frames(g)
+  local sources, order, placed = {}, {}, {}
+  local heap_of = {}
+  for _, c in ipairs(cards) do
+    for _, id in ipairs(c.frame.slots) do
+      local s = g.slots[id + 1]
+      heap_of[s.id] = {}
+      for _, e in ipairs(edges_from_slot(g, s)) do
+        if is_heap(block_of(g, e.to)) then
+          table.insert(heap_of[s.id], e)
+          sources[#sources + 1] = e
+        end
+      end
+    end
+  end
+  local function place(b)
+    if not is_heap(b) or placed[b.id] then
+      return
+    end
+    placed[b.id] = true
+    order[#order + 1] = b
+    for _, e in ipairs(block_out(g, b)) do
+      if e.kind == "owns" or e.kind == "shared" then
+        place(block_of(g, e.to))
+      end
+    end
+  end
+  for _, e in ipairs(sources) do
+    place(block_of(g, e.to))
+  end
+  local labels = {}
+  local letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  for i, b in ipairs(order) do
+    labels[b.id] = i <= 26 and letters:sub(i, i) or ("Z" .. (i - 26))
+  end
+
+  local cv = canvas(W)
+  local rows = {}
+  local y = 1
+  cv:put(1, y, "STACK", "XrayHead")
+  if #g.threads > 1 then
+    cv:put(7, y, " · " .. #g.threads .. " threads", "XrayDim")
+  end
+  y = y + 1
+  local nw, tw = 4, 6
+  for _, c in ipairs(cards) do
+    for _, id in ipairs(c.frame.slots) do
+      local s = g.slots[id + 1]
+      nw = math.max(nw, math.min(len(s.name), 9))
+      tw = math.max(tw, math.min(len(s.ty), 12))
+    end
+  end
+  for _, c in ipairs(cards) do
+    local title = clip(" " .. c.frame.name .. " · " .. short_file(c.frame.file) .. ":" .. c.frame.line .. " ", W - 6)
+    cv:put(1, y, "╭─", "XrayCard")
+    local x = cv:put(3, y, title, c.index == 0 and "XrayCardTitle" or "XrayDim")
+    cv:put(x, y, string.rep("─", W - x) .. "╮", "XrayCard")
+    rows[y] = { frame = c.frame }
+    y = y + 1
+    for _, id in ipairs(c.frame.slots) do
+      local s = g.slots[id + 1]
+      local heap = heap_of[s.id]
+      local tail = {}
+      for i, e in ipairs(heap) do
+        if i <= 2 then
+          tail[#tail + 1] = { " " .. theme.ARROW[e.kind] .. " " .. (labels[e.to.id] or "?") .. (e.to.path or ""), theme.KIND_HL[e.kind] }
+        end
+      end
+      local tail_w = 0
+      for _, t in ipairs(tail) do
+        tail_w = tail_w + len(t[1])
+      end
+      local vw = math.max(6, W - 4 - nw - tw - 2 - tail_w)
+      local segs = slot_row(g, s, labels, opts, nw, tw, vw)
+      cv:put(1, y, "│", "XrayCard")
+      local x2 = cv:segs(2, y, segs)
+      cv:segs(math.max(x2, W - tail_w), y, tail)
+      cv:put(W, y, "│", "XrayCard")
+      rows[y] = { slot = s.id }
+      y = y + 1
+    end
+    cv:put(1, y, "╰" .. string.rep("─", W - 2) .. "╯", "XrayCard")
+    y = y + 2
+  end
+  if #cards == 0 then
+    cv:put(1, y, "no locals here", "XrayDim")
+    y = y + 2
+  end
+  cv:put(1, y, "HEAP", "XrayHead")
+  y = y + 1
+  if #order == 0 then
+    cv:put(1, y, "nothing on the heap from here", "XrayDim")
+    y = y + 1
+  end
+  for _, b in ipairs(order) do
+    for _, segs in ipairs(box_rows(g, b, labels, W)) do
+      cv:segs(1, y, segs)
+      rows[y] = { block = b.id }
+      y = y + 1
+    end
+  end
+  if #(g.freed or {}) > 0 then
+    y = y + 1
+    cv:put(1, y, "freed since the last stop", "XrayAlert")
+    y = y + 1
+    for i, b in ipairs(g.freed) do
+      if i > 3 then
+        break
+      end
+      cv:put(1, y, "✕ " .. clip(b.ty .. "  " .. b.summary, W - 2), "XrayFaint")
+      y = y + 1
+    end
+  end
+  for _, n in ipairs(g.notes or {}) do
+    y = y + 1
+    local hl = n.kind == "realloc" and "XrayWarn" or "XrayAlert"
+    for i, part in ipairs(M.wrap(n.text:gsub("`", ""), W - 2)) do
+      cv:put(1, y, (i == 1 and (n.kind == "realloc" and "⚠ " or "↷ ") or "  ") .. part, hl)
+      y = y + 1
+    end
+  end
+  local lines, hls = cv:render(0)
+  local by_row = {}
+  for r, v in pairs(rows) do
+    by_row[r - 1] = v
+  end
+  return lines, hls, by_row, labels
+end
+
 -- the legend line, the same glyphs and colors as everywhere
 function M.legend()
   local segs = {}

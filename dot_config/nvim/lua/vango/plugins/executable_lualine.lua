@@ -57,6 +57,13 @@ return {
               "filename",
               path = 1,
             },
+            -- the keys that matter right now (lua/vango/hints.lua; :Hints toggles)
+            {
+              function()
+                return require("vango.hints").statusline()
+              end,
+              padding = { left = 3, right = 1 },
+            },
           },
           lualine_x = {
             {
@@ -73,6 +80,7 @@ return {
     end
 
     setup()
+    require("vango.hints").setup()
 
     -- desk-theme switches re-run :colorscheme desk; rebuild the statusline with the new palette
     vim.api.nvim_create_autocmd("ColorScheme", {

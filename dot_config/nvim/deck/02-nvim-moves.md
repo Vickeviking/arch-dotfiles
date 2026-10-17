@@ -1,5 +1,7 @@
 # nvim moves
 
+The middle of the statusline shows the keys that matter right now: step keys while debugging, `Space Rw` on a borrow error, `K K` on a Rust symbol. `:Hints` hides them.
+
 The handful that pays off every day. Operators combine with motions:
 `d` + `w` = delete a word, `c` + `i(` = change inside parentheses.
 

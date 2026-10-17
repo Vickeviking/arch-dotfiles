@@ -47,7 +47,7 @@ and `push` may reallocate, leaving `first` pointing at freed memory.
 | E0716 | a temporary dropped while borrowed | bind the temporary to a `let` first |
 | E0373 | a thread or task borrows locals | `move` closure, or `thread::scope` |
 
-`Space Rw` (**Why not?**) on any line of the error redraws it as a timeline: a bar per borrow from where it starts to its last use, a bar per value from its `let` to where it's dropped or moved, a ✗ where they clash, then the rule in plain words and ways out. `a` there lists rust-analyzer's fixes (the `.clone()` or `move` rustc suggests).
+Rest the cursor on any line of a borrow error and the timeline draws itself: a mark at the end of each line involved (┏ borrow starts, ┗ last use, ✗ the clash) and the story under the error. `Space Rw` (**Why not?**) redraws it as a timeline: a bar per borrow from where it starts to its last use, a bar per value from its `let` to where it's dropped or moved, a ✗ where they clash, then the rule in plain words and ways out. `a` there lists rust-analyzer's fixes (the `.clone()` or `move` rustc suggests).
 `Space Rd` renders the full diagnostic, `Space Re` explains the error code.
 
 ## Splitting borrows

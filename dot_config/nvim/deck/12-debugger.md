@@ -22,8 +22,9 @@ Build without `--release` (or set `debug = true` in the release profile), or var
 | `Space dw` | add the word under the cursor as a watch |
 | `Space dr` | open the REPL |
 | `Space dq` | stop debugging |
-| `Space dx` | X-ray: the memory map (stack, heap, who points where) |
-| `Space dX` | X-ray inline notes on / off |
+| `Space dx` | X-ray: the full memory map (stack, heap, who points where) |
+| `Space dm` | X-ray sidebar show / hide |
+| `Space dX` | X-ray off for this nvim (inline notes, sidebar, Why not? hints); on again next start |
 
 Inside dap-view: the letters in its top bar switch sections, `g?` lists its keys.
 Values appear at the end of each `let` line and update on every step: X-ray's notes when it runs (Rust), dap-view's otherwise.
@@ -53,7 +54,9 @@ let words = vec![…];         ↷ moved into taken
 | `↷` | moved from: both names hold the bits, only the new one counts |
 | `░` | spare capacity in a buffer |
 
-`Space dx` opens the panel. Its tabs:
+On a wide screen the **sidebar** opens by itself at the first stop: the memory map in a split on the right, following every step without taking focus. `q` in it hides it for the session, Enter opens the full panel.
+
+`Space dx` opens the full panel. Its tabs:
 - **Memory**: frames as cards on the left, heap blocks as boxes on the right, arrows between them. Boxes that point at each other name each other by letter.
 - **Frames**: every thread, and what the others are waiting on.
 - **Heap**: each block's address, size, contents and who points at it.

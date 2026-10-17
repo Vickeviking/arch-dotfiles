@@ -53,7 +53,8 @@ return {
 			{ "<leader>dr", function() dap().repl.toggle() end, desc = "Debug: toggle REPL" },
 			{ "<leader>dq", function() dap().terminate() end, desc = "Debug: stop" },
 			{ "<leader>dx", function() require("vango.xray").toggle_panel() end, desc = "X-ray: memory map (stack, heap, pointers)" },
-			{ "<leader>dX", function() require("vango.xray").toggle_inline() end, desc = "X-ray: inline memory notes on/off" },
+			{ "<leader>dX", function() require("vango.xray").toggle_inline() end, desc = "X-ray: all automatic views off/on (this nvim)" },
+			{ "<leader>dm", function() require("vango.xray").toggle_sidebar() end, desc = "X-ray: memory sidebar show/hide" },
 		},
 		config = function()
 			local function colors()

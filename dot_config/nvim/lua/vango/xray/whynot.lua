@@ -554,7 +554,7 @@ end
 
 -- The rustc error to explain for a cursor line: an error on it, the error a
 -- label on it belongs to, or the nearest error in the buffer.
-function M.find(buf, lnum)
+function M.find(buf, lnum, exact)
   local errors, hints = {}, {}
   for _, d in ipairs(vim.diagnostic.get(buf)) do
     if d.source == "rustc" and d.user_data and d.user_data.lsp then
@@ -592,6 +592,9 @@ function M.find(buf, lnum)
         return d
       end
     end
+  end
+  if exact then
+    return nil
   end
   table.sort(errors, function(a, b)
     return math.abs(a.lnum - lnum) < math.abs(b.lnum - lnum)
@@ -717,6 +720,113 @@ function M.open()
     { name = "Compiler", lines = tab_compiler, raw = true, ft = "xray" },
   }, "Why not? · " .. (diag.code or "error"))
   panel:show({ tab = 1, focus = "content" })
+end
+
+-- automatic: rest the cursor on any line of a borrow error and the timeline
+-- is drawn into the code itself (a mark at the end of each line involved) with
+-- the story underneath. No key needed; Space Rw opens the full view.
+
+local auto_ns = vim.api.nvim_create_namespace("vango_whynot_auto")
+local shown = nil -- "buf:line:code" of what's drawn
+
+local MARK = { borrow = "┏", temp = "┏", use_end = "┗", drop = "✕", move = "↷", decl = "○", note_type = "·", note = "·", use_after = "✗", assign = "✗", outlive = "✗", error = "✗" }
+
+function M.auto_clear(buf)
+  if shown then
+    local b = tonumber(shown:match("^(%d+):"))
+    if b and vim.api.nvim_buf_is_valid(b) then
+      vim.api.nvim_buf_clear_namespace(b, auto_ns, 0, -1)
+    end
+  end
+  shown = nil
+  if buf and vim.api.nvim_buf_is_valid(buf) then
+    vim.api.nvim_buf_clear_namespace(buf, auto_ns, 0, -1)
+  end
+end
+
+function M.auto(buf)
+  if vim.g.vango_whynot_auto == false or vim.fn.mode() ~= "n" then
+    return M.auto_clear(buf)
+  end
+  local lnum = vim.api.nvim_win_get_cursor(0)[1] - 1
+  local d = M.find(buf, lnum, true)
+  if not d or not M.CODES[d.code] then
+    return M.auto_clear(buf)
+  end
+  local key = buf .. ":" .. d.lnum .. ":" .. d.code
+  if key == shown then
+    return
+  end
+  M.auto_clear(buf)
+  M.colors()
+  local src = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local m = M.model(M.from_lsp(d, buf), src)
+  -- a short label at the end of each line the error involves
+  local per = {}
+  for _, e in ipairs(m.events) do
+    if e.text ~= "" then
+      per[e.line] = per[e.line] or {}
+      table.insert(per[e.line], e)
+    end
+  end
+  for line, evs in pairs(per) do
+    local chunks = { { "  ", nil } }
+    for i, e in ipairs(evs) do
+      local mark = e.primary and "✗" or (MARK[e.kind] or "·")
+      table.insert(chunks, { (i > 1 and "  " or "") .. mark .. " " .. map.clip(e.text, 60), event_hl(e) })
+    end
+    pcall(vim.api.nvim_buf_set_extmark, buf, auto_ns, line, 0, { virt_text = chunks, virt_text_pos = "eol", hl_mode = "combine", priority = 160 })
+  end
+  -- the story under the error line, wrapped to the window
+  local indent = #(src[d.lnum + 1] or ""):match("^%s*")
+  -- the window minus its sign/number columns, the indent and the "✗ E0502  " prefix
+  local textoff = (vim.fn.getwininfo(vim.api.nvim_get_current_win())[1] or {}).textoff or 0
+  local width = math.max(30, vim.api.nvim_win_get_width(0) - textoff - indent - 11)
+  local story = map.wrap(M.story(m, src), width)
+  local pad = string.rep(" ", indent)
+  local vl = {}
+  for i, part in ipairs(story) do
+    if i > 3 then
+      break
+    end
+    table.insert(vl, { { pad, nil }, { i == 1 and ("✗ " .. d.code .. "  ") or "         ", "XrayAlert" }, { part, "XrayInline" } })
+  end
+  table.insert(vl, { { pad .. "         ", nil }, { "Space Rw", "DeckKbd" }, { " the timeline · ", "XrayFaint" }, { "Space ca", "DeckKbd" }, { " fixes", "XrayFaint" } })
+  pcall(vim.api.nvim_buf_set_extmark, buf, auto_ns, d.lnum, 0, { virt_lines = vl, priority = 160 })
+  shown = key
+end
+
+function M.auto_setup()
+  local group = vim.api.nvim_create_augroup("vango_whynot_auto", { clear = true })
+  vim.api.nvim_create_autocmd({ "CursorHold", "DiagnosticChanged" }, {
+    group = group,
+    callback = function(ev)
+      local buf = vim.api.nvim_get_current_buf()
+      if vim.bo[buf].filetype == "rust" and (ev.event ~= "DiagnosticChanged" or ev.buf == buf) then
+        require("vango.xray.theme").apply()
+        M.auto(buf)
+      end
+    end,
+  })
+  vim.api.nvim_create_autocmd({ "InsertEnter", "BufLeave" }, {
+    group = group,
+    callback = function(ev)
+      M.auto_clear(ev.buf)
+    end,
+  })
+  vim.api.nvim_create_autocmd("CursorMoved", {
+    group = group,
+    callback = function(ev)
+      -- moving off the error's lines takes it away; resting again brings it back
+      if shown and vim.bo[ev.buf].filetype == "rust" then
+        local lnum = vim.api.nvim_win_get_cursor(0)[1] - 1
+        local d = M.find(ev.buf, lnum, true)
+        if not d or (ev.buf .. ":" .. d.lnum .. ":" .. d.code) ~= shown then
+          M.auto_clear(ev.buf)
+        end
+      end
+    end,
+  })
 end
 
 function M.colors()

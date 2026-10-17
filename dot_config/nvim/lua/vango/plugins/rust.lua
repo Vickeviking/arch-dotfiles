@@ -243,6 +243,8 @@ return {
 
 		-- lens: keep recorded layouts fresh on save (only crates that have them)
 		require("vango.lens").setup()
+		-- rest the cursor on a borrow error: its timeline and story appear by themselves
+		require("vango.xray.whynot").auto_setup()
 
 		-- Apply the keymaps on LSP attach for Rust buffers only.
 		vim.api.nvim_create_autocmd("LspAttach", {

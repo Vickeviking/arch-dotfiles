@@ -7,6 +7,7 @@
 -- virtual text steps aside so the two don't stack up.
 
 local inline = require("vango.xray.inline")
+local sidebar = require("vango.xray.sidebar")
 local panel = require("vango.xray.panel")
 local theme = require("vango.xray.theme")
 
@@ -35,6 +36,7 @@ local function redraw()
   if state.inline and state.graph and not state.ended then
     inline.render(state.graph)
     dap_view_text(false)
+    sidebar.auto(state.graph)
   else
     inline.clear()
   end
@@ -122,14 +124,25 @@ function M.scrub(delta)
   panel.refresh()
 end
 
+-- Space dX: everything X-ray draws by itself (inline notes, the sidebar, the
+-- Why not? hints) off or on again. Only for this nvim: the next one starts on.
 function M.toggle_inline()
   state.inline = not state.inline
+  vim.g.vango_whynot_auto = state.inline
   if not state.inline then
     inline.clear()
+    sidebar.close()
     dap_view_text(true)
+    pcall(function()
+      require("vango.xray.whynot").auto_clear(vim.api.nvim_get_current_buf())
+    end)
   end
   redraw()
-  vim.notify("X-ray inline notes " .. (state.inline and "on" or "off"), vim.log.levels.INFO)
+  vim.notify(state.inline and "X-ray on" or "X-ray off for this nvim (it's on again next time)", vim.log.levels.INFO)
+end
+
+function M.toggle_sidebar()
+  sidebar.toggle(state.graph)
 end
 
 function M.toggle_panel()
@@ -160,6 +173,8 @@ function M.setup()
   end
   local function finished()
     state.ended = true
+    sidebar.close()
+    sidebar.dismissed = false
     inline.clear()
     dap_view_text(true)
     panel.refresh()
