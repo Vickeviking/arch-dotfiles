@@ -170,8 +170,11 @@ function Panel:fill(i, ctx)
   local buf = self.bufs[i]
   if not (buf and vim.api.nvim_buf_is_valid(buf)) then
     buf = scratch(tab.ft or "deck")
-    -- markdown highlighting (and ```rust injections) for the deck filetype
-    pcall(vim.treesitter.start, buf, "markdown")
+    -- markdown highlighting (and ```rust injections) for the deck filetype;
+    -- other filetypes (X-ray's drawings) color themselves
+    if (tab.ft or "deck") == "deck" then
+      pcall(vim.treesitter.start, buf, "markdown")
+    end
     self.bufs[i] = buf
     self.mtimes[i] = nil
     self:map_content(buf)

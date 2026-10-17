@@ -1,5 +1,6 @@
 -- Debugging: nvim-dap + nvim-dap-view (panel, hover, inline values), codelldb from mason.
--- rustaceanvim finds codelldb itself; Space dd picks a Rust target to debug.
+-- rustaceanvim finds codelldb itself (through xray-dap); Space dd picks a Rust target to debug.
+-- X-ray (lua/vango/xray) shows memory at every stop: inline notes and Space dx.
 -- Keys are listed in the deck (Space r → Debugger) and under Space d in which-key.
 
 local function dap()
@@ -51,6 +52,8 @@ return {
 			{ "<leader>dw", function() require("dap-view").add_expr() end, desc = "Debug: watch word under cursor" },
 			{ "<leader>dr", function() dap().repl.toggle() end, desc = "Debug: toggle REPL" },
 			{ "<leader>dq", function() dap().terminate() end, desc = "Debug: stop" },
+			{ "<leader>dx", function() require("vango.xray").toggle_panel() end, desc = "X-ray: memory map (stack, heap, pointers)" },
+			{ "<leader>dX", function() require("vango.xray").toggle_inline() end, desc = "X-ray: inline memory notes on/off" },
 		},
 		config = function()
 			local function colors()
@@ -73,6 +76,8 @@ return {
 			sign("DapBreakpointRejected", { text = "○", texthl = "DapBreakpoint" })
 			sign("DapLogPoint", { text = "◇", texthl = "DapLogPoint" })
 			sign("DapStopped", { text = "▶", texthl = "DapStopped", linehl = "DapStoppedLine" })
+
+			require("vango.xray").setup()
 
 			require("dap-view").setup({
 				auto_toggle = true, -- the view opens when a session starts and closes when it ends
