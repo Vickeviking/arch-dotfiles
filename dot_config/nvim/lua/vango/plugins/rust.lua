@@ -44,6 +44,26 @@ return {
 		
 		-- Configure rust-analyzer via rustaceanvim
 		vim.g.rustaceanvim = {
+			-- Debugging goes through xray-dap (genomlysning): it passes everything
+			-- between nvim-dap and codelldb through and records a memory snapshot at
+			-- every stop. Without xray-dap installed it's plain codelldb.
+			dap = {
+				adapter = function()
+					local ext = vim.fn.stdpath("data") .. "/mason/packages/codelldb/extension"
+					local codelldb, liblldb = ext .. "/adapter/codelldb", ext .. "/lldb/lib/liblldb.so"
+					local cmd = vim.fn.exepath("xray-dap") ~= "" and vim.fn.exepath("xray-dap") or nil
+					return {
+						type = "server",
+						port = "${port}",
+						host = "127.0.0.1",
+						executable = {
+							command = cmd or codelldb,
+							args = cmd and { "--codelldb", codelldb, "--liblldb", liblldb, "--port", "${port}" }
+								or { "--liblldb", liblldb, "--port", "${port}" },
+						},
+					}
+				end,
+			},
 			server = {
 				-- rustup's rust-analyzer: it matches the installed rustc, so it can compute
 				-- memory layouts (size/align on K, and the lens). Mason's standalone build
