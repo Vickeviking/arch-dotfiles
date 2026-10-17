@@ -52,3 +52,61 @@ keymap.set("v", "<A-k>", ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
 vim.keymap.set("n", "<leader>xx", "<cmd>Trouble diagnostics toggle<CR>", { desc = "Diagnostics panel" })
 vim.keymap.set("n", "<leader>xq", "<cmd>Trouble qflist toggle<CR>", { desc = "Quickfix panel" })
 vim.keymap.set("n", "<leader>xr", "<cmd>Trouble lsp toggle<CR>", { desc = "LSP symbols panel" })
+
+-- Full manual for the word under the cursor (Viktor 2026-09-01): K is the
+-- quick LSP hover (type + docstring); gK opens the COMPLETE man page —
+-- man 3/2, same as `man pthread_create` — in a split with highlights and
+-- jumpable links (K inside a man buffer follows a link, C-o goes back).
+-- Needs the man-pages package (installed on both machines).
+--
+-- OpenMP has no man pages (Viktor 2026-09-28), so when `man` has nothing gK
+-- falls back to GCC's libgomp info manual, which has one node per routine /
+-- env var (omp_get_thread_num, OMP_NUM_THREADS, ...). q closes it.
+vim.keymap.set("n", "gK", function()
+  local word = vim.fn.expand("<cword>")
+  vim.fn.system({ "man", "-w", word })
+  if vim.v.shell_error == 0 then
+    vim.cmd("Man " .. word)
+    return
+  end
+  local lines = vim.fn.systemlist({ "info", "-f", "libgomp", "-n", word, "-o", "-" })
+  if vim.v.shell_error ~= 0 then
+    vim.notify("No man page or libgomp info for " .. word, vim.log.levels.WARN)
+    return
+  end
+  vim.cmd("new")
+  local buf = vim.api.nvim_get_current_buf()
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  vim.bo[buf].buftype = "nofile"
+  vim.bo[buf].bufhidden = "wipe"
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].filetype = "info"
+  vim.api.nvim_buf_set_name(buf, "info://libgomp/" .. word)
+  vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = buf, silent = true })
+end, { desc = "Full man page (or libgomp info) for word under cursor" })
+
+-- Same jump keys inside man pages as in code (Viktor 2026-09-01): nvim's man
+-- ftplugin navigates with C-] / C-t, but gd and <leader>jb are the muscle
+-- memory. gd follows a `pthread_create(3)` reference through man's tagfunc;
+-- <leader>jb pops the tag stack, falling back to the jumplist when the page
+-- was opened with gK (nothing on the tag stack then).
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "man",
+  desc = "gd/<leader>jb navigation in man buffers",
+  callback = function(ev)
+    vim.keymap.set("n", "gd", "<C-]>", {
+      buffer = ev.buf,
+      silent = true,
+      desc = "Follow man reference",
+    })
+    vim.keymap.set("n", "<leader>jb", function()
+      if not pcall(vim.cmd.pop) then
+        vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-o>", true, false, true), "n", false)
+      end
+    end, {
+      buffer = ev.buf,
+      silent = true,
+      desc = "Jump back",
+    })
+  end,
+})

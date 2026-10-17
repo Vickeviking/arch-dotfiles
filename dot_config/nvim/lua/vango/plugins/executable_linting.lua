@@ -8,11 +8,21 @@ return {
 		lint.linters_by_ft = {
 			-- rust = { "clippy" }, -- Disabled: rust-analyzer already runs clippy on save
 			c = { "cpplint" }, -- C linter
+			cpp = { "cpplint" }, -- C++ linter (samma verktyg; clangd står för LSP-diagnostiken)
 			python = { "ruff" },
 			markdown = { "markdownlint-cli2" },
 			css = { "stylelint" },
 			scss = { "stylelint" },
 			sass = { "stylelint" },
+		}
+
+		-- cpplint kör Googles stilguide rakt av och gnäller om copyright-header
+		-- på rad 1 i varje C/C++-fil. Filtrera bort det bruset; clangd + clang-tidy
+		-- står ändå för den riktiga diagnostiken.
+		-- Ett projekt kan överstyra via egen CPPLINT.cfg i repo-roten.
+		lint.linters.cpplint.args = {
+			"--filter=-legal/copyright,-build/include_subdir,-build/c++11,-whitespace/indent_namespace",
+			"--linelength=120",
 		}
 
 		local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })

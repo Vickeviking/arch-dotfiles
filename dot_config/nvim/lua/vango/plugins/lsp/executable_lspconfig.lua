@@ -30,6 +30,16 @@ return {
 		})
 		vim.o.updatetime = 500
 
+		vim.api.nvim_create_autocmd("LspAttach", {
+			group = vim.api.nvim_create_augroup("UserClangdInlayHints", {}),
+			callback = function(ev)
+				local client = vim.lsp.get_client_by_id(ev.data.client_id)
+				if client and client.name == "clangd" then
+					pcall(vim.lsp.inlay_hint.enable, true, { bufnr = ev.buf })
+				end
+			end,
+		})
+
 		-- Buffer-local maps on attach
 		vim.api.nvim_create_autocmd("LspAttach", {
 			group = vim.api.nvim_create_augroup("UserLspConfig", {}),
@@ -134,18 +144,24 @@ return {
 				capabilities = clang_caps,
 				cmd = {
 					"clangd",
+					"--enable-config",
+					"--log=error",
 					"--background-index",
+					"--background-index-priority=low",
 					"--clang-tidy",
 					"--header-insertion=iwyu",
-					"--completion-style=detailed",
-					"--pch-storage=memory",
-					"--cross-file-rename",
-					"--all-scopes-completion",
+					"--completion-style=bundled",
+					"--function-arg-placeholders=1",
+					"--pch-storage=disk",
+					"--query-driver=/usr/bin/g++,/usr/bin/gcc,/usr/bin/clang++,/usr/bin/clang",
+					"--malloc-trim",
+					"-j=8",
+					"--limit-results=50",
 				},
 				init_options = {
 					clangdFileStatus = true,
 					usePlaceholders = true,
-					completeUnimported = true,
+					completeUnimported = false,
 					semanticHighlighting = true,
 				},
 			})

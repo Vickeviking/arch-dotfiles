@@ -23,6 +23,7 @@ return {
 				lua = { "stylua" },
 				python = { "black" },
 				c = { "clang-format" },
+				cpp = { "clang-format" },
 				java = { "google-java-format" },
 				rust = { "rustfmt" },
 				vue = prettier,

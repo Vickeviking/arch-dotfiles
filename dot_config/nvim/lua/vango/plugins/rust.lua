@@ -165,6 +165,13 @@ return {
 			-- Hover documentation
 			map("K", vim.lsp.buf.hover, "Rust: hover documentation")
 
+			-- Full docs (parallell till gK→man i C): K är snabb hover,
+			-- gK öppnar den KOMPLETTA dokumentationen för symbolen under
+			-- markören — std/docs.rs i webbläsaren via rustaceanvim.
+			map("gK", function()
+				vim.cmd.RustLsp("openDocs")
+			end, "Rust: öppna std/docs.rs-dokumentationen")
+
 			-- Code actions
 			map("<leader>ca", vim.lsp.buf.code_action, "Rust: code actions")
 

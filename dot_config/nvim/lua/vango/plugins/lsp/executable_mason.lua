@@ -56,7 +56,8 @@ return {
 			require("mason-tool-installer").setup({
 				ensure_installed = {
 					"cpplint",
-					"rustfmt",
+					"clang-format",
+					-- rustfmt: not a mason package; provided by rustup/system (/usr/bin/rustfmt)
 					"protolint",
 					"ruff",
 					"black",

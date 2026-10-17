@@ -8,3 +8,7 @@ README.md
 
 # Secrets: never manage these
 .config/desk/*.env
+
+# backups made before edits (file.bak-YYYYMMDD-HHMMSS) and logs
+**/*.bak-*
+.config/nvim/**/*.log

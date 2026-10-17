@@ -16,6 +16,11 @@ return {
       todo_comments.jump_prev()
     end, { desc = "Previous todo comment" })
 
-    todo_comments.setup()
+    todo_comments.setup({
+      keywords = {
+        -- Open questions about the code, to come back to later
+        WHY = { icon = "? ", color = "hint", alt = { "QUESTION" } },
+      },
+    })
   end,
 }

@@ -8,3 +8,5 @@ end)
 
 require("vango.core.options")
 require("vango.core.keymaps")
+
+require("vango.core.cf_live")
