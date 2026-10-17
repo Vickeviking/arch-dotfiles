@@ -1,0 +1,30 @@
+-- Run: nvim --headless -c "PlenaryBustedDirectory tests" (from ~/.config/nvim)
+local action = require("vango.deck.keys").action
+
+describe("deck rail keys", function()
+  it("j and k wrap around", function()
+    assert.same({ kind = "select", index = 1 }, action("j", 13, 13, false))
+    assert.same({ kind = "select", index = 13 }, action("k", 1, 13, false))
+    assert.same({ kind = "select", index = 5 }, action("<Down>", 4, 13, false))
+  end)
+
+  it("digits jump and zero is the tenth tab", function()
+    assert.same({ kind = "select", index = 1 }, action("1", 6, 13, false))
+    assert.same({ kind = "select", index = 10 }, action("0", 1, 13, false))
+    assert.same({ kind = "ignore" }, action("9", 1, 5, false))
+  end)
+
+  it("gg needs two presses and G goes last", function()
+    assert.same({ kind = "arm_g" }, action("g", 4, 13, false))
+    assert.same({ kind = "select", index = 1 }, action("g", 4, 13, true))
+    assert.same({ kind = "select", index = 13 }, action("G", 4, 13, false))
+  end)
+
+  it("window keys", function()
+    assert.same({ kind = "enter" }, action("<C-l>", 1, 13, false))
+    assert.same({ kind = "enter" }, action("l", 1, 13, false))
+    assert.same({ kind = "close" }, action("<Esc>", 1, 13, false))
+    assert.same({ kind = "help" }, action("?", 1, 13, false))
+    assert.same({ kind = "search" }, action("/", 1, 13, false))
+  end)
+end)

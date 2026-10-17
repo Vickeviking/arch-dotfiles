@@ -6,3 +6,6 @@ undo/
 plugin/packer_compiled.lua
 # logs
 *.log
+
+# backups made before edits (file.bak-YYYYMMDD-HHMMSS)
+*.bak-*

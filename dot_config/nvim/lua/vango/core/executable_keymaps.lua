@@ -7,6 +7,10 @@ keymap.set("i", "jk", "<ESC>", { desc = "Exit insert mode with jk" })
 
 keymap.set("n", "<leader>nh", ":nohl<CR>", { desc = "Clear search highlights" })
 
+keymap.set("n", "<leader>ow", function()
+	require("vango.core.open_web").open_current_file()
+end, { desc = "Open current file in browser" })
+
 -- increment/decrement numbers
 keymap.set("n", "<leader>+", "<C-a>", { desc = "Increment number" }) -- increment
 keymap.set("n", "<leader>-", "<C-x>", { desc = "decrement number" }) -- decrement

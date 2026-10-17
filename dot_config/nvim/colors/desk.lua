@@ -282,6 +282,8 @@ hl.SnacksDashboardHeader = { fg = c.accent }
 hl.SnacksDashboardKey = { fg = c.accent2 }
 hl.AlphaHeader = { fg = c.accent }
 hl.AlphaButtons = { fg = c.accent2 }
+-- nvim-notify fades from this color; Normal is transparent, so give it the surface
+hl.NotifyBackground = { bg = c.bg }
 -- render-markdown
 hl.RenderMarkdownH1Bg = { bg = mix(c.accent, c.bg, 0.15) }
 hl.RenderMarkdownH2Bg = { bg = mix(c.accent2, c.bg, 0.15) }

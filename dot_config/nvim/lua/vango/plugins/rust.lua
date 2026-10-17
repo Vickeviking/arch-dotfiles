@@ -77,79 +77,81 @@ return {
 	end,
 	config = function()
 		----------------------------------------------------------------------
-		-- Toggle "expand macro" in the same window (preserves your UX)
+		-- Toggle "expand macro" in the same window.
 		----------------------------------------------------------------------
+		local function macro_expansion_lines(result)
+			local name = result.name or "selected"
+			local title = "// Recursive expansion of the " .. name .. " macro"
+			local lines = {
+				"// " .. string.rep("=", #title - 3),
+				title,
+				"// " .. string.rep("=", #title - 3),
+				"",
+			}
+
+			for _, line in ipairs(vim.split(result.expansion or "", "\n", { plain = true })) do
+				table.insert(lines, line)
+			end
+
+			return lines
+		end
+
 		local function expand_macro_toggle_same_win()
-			-- If we previously toggled, restore
-			if vim.w._rt_expanded and vim.w._rt_prev_buf and vim.api.nvim_buf_is_valid(vim.w._rt_prev_buf) then
+			if vim.w._rt_expanded_buf and vim.api.nvim_get_current_buf() == vim.w._rt_expanded_buf then
 				local expanded_buf = vim.api.nvim_get_current_buf()
 				vim.api.nvim_win_set_buf(0, vim.w._rt_prev_buf)
+				if vim.w._rt_prev_view then
+					pcall(vim.fn.winrestview, vim.w._rt_prev_view)
+				end
 				pcall(vim.api.nvim_buf_delete, expanded_buf, { force = true })
-				vim.w._rt_expanded, vim.w._rt_prev_buf = false, nil
+				vim.w._rt_expanded_buf, vim.w._rt_prev_buf, vim.w._rt_prev_view = nil, nil, nil
 				return
 			end
 
-			local curwin, prev_buf = vim.api.nvim_get_current_win(), vim.api.nvim_get_current_buf()
-			local wins_before = vim.api.nvim_list_wins()
-
-			-- Preferred path: rustaceanvim command
-			local ok_cmd = pcall(function()
-				vim.cmd.RustLsp({ "expandMacro" })
-			end)
-
-			-- Fallback: call rust-analyzer request directly
-			if not ok_cmd then
-				local params = vim.lsp.util.make_position_params(0, "utf-16")
-				local client = vim.lsp.get_clients({ bufnr = 0, name = "rust-analyzer" })[1]
-				if not client then
-					vim.notify("No rust-analyzer client", vim.log.levels.WARN)
-					return
-				end
-				client.request("rust-analyzer/expandMacro", params, function(err, result)
-					if err or not result or not result.expansion or not result.expansion.text then
-						vim.notify("expandMacro failed", vim.log.levels.WARN)
-						return
-					end
-					local lines = vim.split(result.expansion.text, "\n", { plain = true })
-					local buf = vim.api.nvim_create_buf(false, true)
-					vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-					vim.bo[buf].filetype = "rust"
-					vim.bo[buf].buftype = "nofile"
-					vim.bo[buf].bufhidden = "wipe"
-					vim.bo[buf].swapfile = false
-					vim.api.nvim_set_current_buf(buf)
-				end, 0)
+			local prev_buf = vim.api.nvim_get_current_buf()
+			local client = vim.lsp.get_clients({ bufnr = prev_buf, name = "rust-analyzer" })[1]
+			if not client then
+				vim.notify("No rust-analyzer client", vim.log.levels.WARN)
+				return
 			end
 
-			-- Move expanded view into the same window & mark for toggle
-			vim.schedule(function()
-				local wins_after = vim.api.nvim_list_wins()
-				local newwin
-				for _, w in ipairs(wins_after) do
-					local is_new = true
-					for _, bw in ipairs(wins_before) do
-						if w == bw then
-							is_new = false
-							break
-						end
-					end
-					if is_new then
-						newwin = w
-						break
-					end
+			local params = vim.lsp.util.make_position_params(0, client.offset_encoding or "utf-8")
+			local prev_view = vim.fn.winsaveview()
+			client.request("rust-analyzer/expandMacro", params, function(err, result)
+				if err or not result or not result.expansion then
+					vim.notify("No macro expansion available", vim.log.levels.INFO)
+					return
 				end
-				if newwin and vim.api.nvim_win_is_valid(newwin) then
-					local exp_buf = vim.api.nvim_win_get_buf(newwin)
-					vim.api.nvim_win_set_buf(curwin, exp_buf)
-					pcall(vim.api.nvim_win_close, newwin, true)
-					vim.w._rt_prev_buf, vim.w._rt_expanded = prev_buf, true
-					pcall(function()
-						vim.bo[exp_buf].buftype = "nofile"
-						vim.bo[exp_buf].bufhidden = "wipe"
-						vim.bo[exp_buf].swapfile = false
-					end)
-				end
-			end)
+
+				vim.schedule(function()
+					if not vim.api.nvim_buf_is_valid(prev_buf) then
+						return
+					end
+
+					local exp_buf = vim.api.nvim_create_buf(false, true)
+					vim.bo[exp_buf].filetype = "rust"
+					vim.bo[exp_buf].buftype = "nofile"
+					vim.bo[exp_buf].bufhidden = "wipe"
+					vim.bo[exp_buf].swapfile = false
+					vim.bo[exp_buf].modifiable = true
+					vim.api.nvim_buf_set_lines(exp_buf, 0, -1, false, macro_expansion_lines(result))
+					vim.bo[exp_buf].modifiable = false
+					vim.bo[exp_buf].readonly = true
+
+					vim.api.nvim_win_set_buf(0, exp_buf)
+					vim.w._rt_prev_buf = prev_buf
+					vim.w._rt_prev_view = prev_view
+					vim.w._rt_expanded_buf = exp_buf
+
+					local opts = { buffer = exp_buf, silent = true, nowait = true }
+					vim.keymap.set("n", "<leader>mx", expand_macro_toggle_same_win, vim.tbl_extend("force", opts, {
+						desc = "Rust: return from macro expansion",
+					}))
+					vim.keymap.set("n", "q", expand_macro_toggle_same_win, vim.tbl_extend("force", opts, {
+						desc = "Rust: close macro expansion",
+					}))
+				end)
+			end, prev_buf)
 		end
 
 		----------------------------------------------------------------------
