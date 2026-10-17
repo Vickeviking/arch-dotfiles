@@ -3,6 +3,19 @@
 Sizes are for x86-64 (8-byte pointers), checked with `size_of` on rustc 1.99.
 `print-type-sizes` shows any type of yours: `cargo +nightly rustc -- -Zprint-type-sizes`.
 
+## See it in nvim: the lens
+
+| Keys | Does |
+| ---- | ---- |
+| `K` | hover, now with `size = …, align = …` |
+| `K` `K` | the lens: Overview · Layout · Methods · Traits (types and variables), Overview · Calls · Tests (functions) |
+| `J` / `K` inside | next / previous lens tab (`C-h` for the tab list) |
+| `⏎` | jump to the method, trait impl, caller or test under the cursor |
+| `r` | record layouts of generic types with a nightly build (every instantiation the crate uses) |
+
+Layout reads byte by byte: one row is 8 bytes, each `██` is a byte colored by its field, `░░` is padding.
+After `r` once, saving a Rust file keeps the recorded layouts fresh.
+
 ## Sizes worth knowing
 
 | Type | Size | Why |

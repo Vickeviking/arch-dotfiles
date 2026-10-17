@@ -8,6 +8,11 @@
 -- or { name = "…", file = "/abs/path.md" }. Content buffers are kept between
 -- opens, so hiding and showing is instant and remembers where you were.
 --
+-- A `lines` function may also return a second value { hls = {{row, col, end_col, group}},
+-- targets = {[row] = location} } (rows 0-based, locations as LSP Location):
+-- highlights are drawn after filling, and Enter on a target row jumps there.
+-- `raw = true` on a tab skips the prose reflow, so those rows stay exact.
+--
 -- The deck (Space r) uses it today; the Rust lens and the debugger views reuse it.
 
 local theme = require("vango.deck.theme")
@@ -17,6 +22,7 @@ local Panel = {}
 Panel.__index = Panel
 
 local ns = vim.api.nvim_create_namespace("vango_panel")
+local ns_content = vim.api.nvim_create_namespace("vango_panel_content")
 local RAIL_W = 26
 
 local M = {}
@@ -28,14 +34,16 @@ function M.new(opts)
   self.tabs = opts.tabs or {}
   self.on_search = opts.on_search -- function(panel) for `/` in the rail
   self.help_lines = opts.help_lines
+  self.keys = opts.keys or {} -- extra content keys: { { "r", fn(panel), "desc" } }
   self.cur = 1
   self.focus = "rail"
   self.g_armed = false
   self.cursors = {} -- tab index -> {row, col}
   self.bufs = {} -- tab index -> bufnr
   self.mtimes = {} -- tab index -> file mtime when loaded
+  self.targets = {} -- tab index -> {[row] = location}
   self.wins = {}
-  self.augroup = vim.api.nvim_create_augroup("vango_panel_" .. self.title, { clear = true })
+  self.augroup = vim.api.nvim_create_augroup("vango_panel_" .. (opts.id or self.title), { clear = true })
   theme.apply()
   vim.api.nvim_create_autocmd("ColorScheme", {
     group = self.augroup,
@@ -169,7 +177,14 @@ function Panel:fill(i, ctx)
     self:map_content(buf)
   end
   if tab.lines then
-    set_lines(buf, reflow(tab.lines(ctx), self.width))
+    local lines, extra = tab.lines(ctx)
+    set_lines(buf, tab.raw and lines or reflow(lines, self.width))
+    vim.api.nvim_buf_clear_namespace(buf, ns_content, 0, -1)
+    extra = extra or {}
+    for _, h in ipairs(extra.hls or {}) do
+      pcall(vim.api.nvim_buf_set_extmark, buf, ns_content, h[1], h[2], { end_col = h[3], hl_group = h[4], priority = 200 })
+    end
+    self.targets[i] = extra.targets or {}
   elseif tab.file then
     local stamp = vim.fn.getftime(tab.file) .. ":" .. tostring(self.width)
     if self.mtimes[i] ~= stamp then
@@ -178,6 +193,36 @@ function Panel:fill(i, ctx)
     end
   end
   return buf
+end
+
+-- Swap in a new set of tabs (the lens does this per symbol). Old buffers go.
+function Panel:set_tabs(tabs, title)
+  if self:is_open() then
+    self:hide()
+  end
+  for _, b in pairs(self.bufs) do
+    if vim.api.nvim_buf_is_valid(b) then
+      pcall(vim.api.nvim_buf_delete, b, { force = true })
+    end
+  end
+  self.tabs, self.bufs, self.cursors, self.mtimes, self.targets = tabs, {}, {}, {}, {}
+  self.cur = 1
+  self.focus = "content"
+  if title then
+    self.title = title
+  end
+end
+
+-- Re-render the visible tab, e.g. when an async answer arrived.
+function Panel:refresh()
+  if not self:is_open() then
+    return
+  end
+  local w = self.wins.content
+  local pos = vim.api.nvim_win_get_cursor(w)
+  self:fill(self.cur, { origin_buf = self.origin_buf })
+  local n = vim.api.nvim_buf_line_count(vim.api.nvim_win_get_buf(w))
+  pcall(vim.api.nvim_win_set_cursor, w, { math.min(pos[1], n), pos[2] })
 end
 
 -- every tab's lines, for searching across the whole panel
@@ -535,6 +580,21 @@ function Panel:map_content(buf)
   vim.keymap.set("n", "?", function()
     self:toggle_help()
   end, vim.tbl_extend("force", o, { desc = "Deck: keys" }))
+  for _, k in ipairs(self.keys) do
+    vim.keymap.set("n", k[1], function()
+      k[2](self)
+    end, vim.tbl_extend("force", o, { desc = k[3] }))
+  end
+  -- Enter on a row with a target (a method, caller, test…) jumps there
+  vim.keymap.set("n", "<CR>", function()
+    local row = vim.api.nvim_win_get_cursor(0)[1] - 1
+    local loc = (self.targets[self.cur] or {})[row]
+    if not loc then
+      return
+    end
+    self:hide()
+    vim.lsp.util.show_document(loc, "utf-16", { focus = true })
+  end, vim.tbl_extend("force", o, { desc = "Deck: jump to the item under the cursor" }))
 end
 
 return M

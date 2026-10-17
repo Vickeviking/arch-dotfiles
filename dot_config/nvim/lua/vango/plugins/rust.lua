@@ -45,8 +45,13 @@ return {
 		-- Configure rust-analyzer via rustaceanvim
 		vim.g.rustaceanvim = {
 			server = {
-				-- Use Mason's standalone rust-analyzer (newer version with better inlay hints)
-				cmd = { vim.fn.stdpath("data") .. "/mason/bin/rust-analyzer" },
+				-- rustup's rust-analyzer: it matches the installed rustc, so it can compute
+				-- memory layouts (size/align on K, and the lens). Mason's standalone build
+				-- (0.3.2854) couldn't (checked 2026-10-17). Mason's stays as a fallback.
+				cmd = {
+					vim.fn.exepath("rust-analyzer") ~= "" and vim.fn.exepath("rust-analyzer")
+						or (vim.fn.stdpath("data") .. "/mason/bin/rust-analyzer"),
+				},
 				settings = {
 					["rust-analyzer"] = {
 						check = {
@@ -166,7 +171,11 @@ return {
 			end
 
 			-- Hover documentation
-			map("K", vim.lsp.buf.hover, "Rust: hover documentation")
+			-- K: hover (with size/align); K again while it shows: the Rust lens
+			-- (layout, methods, traits, calls, tests). See the deck, Types & layout.
+			map("K", function()
+				require("vango.lens").K()
+			end, "Rust: hover, K again for the lens")
 
 			-- Full docs (parallell till gK→man i C): K är snabb hover,
 			-- gK öppnar den KOMPLETTA dokumentationen för symbolen under
@@ -199,6 +208,9 @@ return {
 				vim.cmd.RustLsp("openCargo")
 			end, "Rust: open Cargo.toml")
 		end
+
+		-- lens: keep recorded layouts fresh on save (only crates that have them)
+		require("vango.lens").setup()
 
 		-- Apply the keymaps on LSP attach for Rust buffers only.
 		vim.api.nvim_create_autocmd("LspAttach", {
