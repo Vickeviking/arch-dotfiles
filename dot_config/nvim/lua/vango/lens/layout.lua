@@ -121,6 +121,11 @@ local function legend(lines, hls, segments)
   end
 end
 
+-- `<` in a heading would read as a markdown autolink (`DateTime<Utc>`)
+local function heading(t)
+  return (t:gsub("<", "\\<"))
+end
+
 local function padding_of(size, segments)
   local used = {}
   for _, s in ipairs(segments) do
@@ -161,15 +166,26 @@ function M.render_ra(result)
   table.sort(segs, function(x, y)
     return x.offset < y.offset
   end)
+  -- an enum (or opaque type) with no fields to show: the bytes are the value
+  -- itself, not padding
+  local whole = #segs == 0 and root.size > 0
+  if whole then
+    segs = { { name = "value", ty = root.typename, offset = 0, size = root.size, group = "LensF1" } }
+  end
   local pad = padding_of(root.size, segs)
-  table.insert(lines, ("## %s"):format(root.typename))
+  table.insert(lines, "## " .. heading(root.typename))
   table.insert(lines, "")
   table.insert(lines, ("%d bytes · align %d · %d bytes padding%s"):format(
     root.size,
     root.alignment,
     pad,
-    #segs > 0 and "" or " · no fields"
+    whole and " · no field breakdown" or ""
   ))
+  if whole and root.typename:match("^Option<%s*[%w:]*[BRANW][%w]*<") or root.typename:match("^Option<&") then
+    hlx(hls, #lines - 1, 0, #lines[#lines], "LensDim")
+    table.insert(lines, "")
+    table.insert(lines, "> None is stored as the null pointer (a niche), so the Option costs no extra byte.")
+  end
   hlx(hls, #lines - 1, 0, #lines[#lines], "LensDim")
   table.insert(lines, "")
   if root.size > 0 then
@@ -183,21 +199,46 @@ function M.render_ra(result)
   end
 
   -- the nested structure below the top level, as a tree
-  local function walk(idx, depth, out)
+  -- the tree is collected first, so the size column lines up with the widest row
+  local rows = {}
+  local function walk(idx, depth, guide)
     local n = nodes[idx + 1]
     if n.childrenStart < 0 then
       return
     end
-    for i = n.childrenStart, n.childrenStart + n.childrenLen - 1 do
+    local last_i = n.childrenStart + n.childrenLen - 1
+    for i = n.childrenStart, last_i do
       local c = nodes[i + 1]
-      local row = #out
-      local pre = " " .. string.rep("│ ", depth) .. "├ "
-      local line = ("%s%s: %s  %d B +%d"):format(pre, c.itemName, c.typename, c.size, c.offset)
-      table.insert(out, line)
-      hlx(hls, row, 0, #pre, "LensNum")
-      hlx(hls, row, #line - #(("%d B +%d"):format(c.size, c.offset)), #line, "LensDim")
+      local last = i == last_i
+      local pre = " " .. guide .. (last and "└ " or "├ ")
+      -- rust-analyzer prints pattern types (`usize is 0..=isize::MAX`) as {pat}
+      local ty = c.typename
+      if ty == "{pat}" then
+        ty = n.typename:match("^NonNull") and "*const T (never null)" or "usize (≤ isize::MAX)"
+      end
+      table.insert(rows, {
+        pre = pre,
+        head = ("%s%s: %s"):format(pre, c.itemName, ty),
+        tail = c.size == 0 and "zero-sized" or ("%d B  +%d"):format(c.size, c.offset),
+        zst = c.size == 0,
+      })
       if depth < 5 then
-        walk(i, depth + 1, out)
+        walk(i, depth + 1, guide .. (last and "  " or "│ "))
+      end
+    end
+  end
+  local function emit(out)
+    local w = 0
+    for _, r in ipairs(rows) do
+      w = math.max(w, vim.fn.strdisplaywidth(r.head))
+    end
+    for row, r in ipairs(rows) do
+      local line = r.head .. string.rep(" ", w + 3 - vim.fn.strdisplaywidth(r.head)) .. r.tail
+      table.insert(out, line)
+      hlx(hls, row - 1, 0, #r.pre, "LensNum")
+      hlx(hls, row - 1, #line - #r.tail, #line, "LensDim")
+      if r.zst then
+        hlx(hls, row - 1, #r.pre, #line, "LensDim")
       end
     end
   end
@@ -205,7 +246,8 @@ function M.render_ra(result)
   local first_tree_row = #lines + 3
   -- rows in `tree` are relative; shift their highlights after appending
   local before = #hls
-  walk(0, 0, tree)
+  walk(0, 0, "")
+  emit(tree)
   if #tree > #segs then
     table.insert(lines, "")
     table.insert(lines, "### Inside")
@@ -239,7 +281,7 @@ function M.render_sizes(layout, lines, hls)
     return segs
   end
   local pad_total = 0
-  table.insert(lines, ("## %s"):format(layout.name))
+  table.insert(lines, "## " .. heading(layout.name))
   table.insert(lines, "")
   local head_row = #lines
   table.insert(lines, "")

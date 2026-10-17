@@ -11,10 +11,11 @@ Sizes are for x86-64 (8-byte pointers), checked with `size_of` on rustc 1.99.
 | `K` `K` | the lens: Overview · Layout · Methods · Traits (types and variables), Overview · Calls · Tests (functions) |
 | `J` / `K` inside | next / previous lens tab (`C-h` for the tab list) |
 | `⏎` | jump to the method, trait impl, caller or test under the cursor |
-| `r` | record layouts of generic types with a nightly build (every instantiation the crate uses) |
+| `r` | let rustc measure layouts with a nightly build: every instantiation of a generic type, or a struct rust-analyzer can't size (works for `src/bin/*` too) |
 
 Layout reads byte by byte: one row is 8 bytes, each `██` is a byte colored by its field, `░░` is padding.
 After `r` once, saving a Rust file keeps the recorded layouts fresh.
+On a variable, Overview shows the variable's type, then **the type's own docs**, then "In the debugger": what X-ray will draw for it (Vec's spare capacity, a parking_lot Mutex's LOCKED / PARKED bits, a tokio task's state…).
 
 ## Sizes worth knowing
 

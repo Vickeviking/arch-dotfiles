@@ -44,6 +44,9 @@ return {
 					"stylelint_lsp",
 					"lua_ls",
 					"gopls",
+					"bashls",
+					"taplo",
+					"dockerls",
 				},
 				automatic_enable = false,
 			})
@@ -70,6 +73,8 @@ return {
 					"prettier",
 					"stylelint",
 					"markdownlint-cli2",
+					"shfmt",
+					"shellcheck",
 				},
 				auto_update = false,
 				run_on_start = true,

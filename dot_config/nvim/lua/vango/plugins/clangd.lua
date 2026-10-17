@@ -44,9 +44,6 @@ return {
 				end
 
 				map("<leader>ch", "<cmd>ClangdSwitchSourceHeader<cr>", "Clangd: växla .cpp/.h")
-				map("<leader>ci", function()
-					vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }), { bufnr = buf })
-				end, "Clangd: toggla inlay hints")
 				map("<leader>ct", "<cmd>ClangdTypeHierarchy<cr>", "Clangd: typhierarki")
 				map("<leader>cs", "<cmd>ClangdSymbolInfo<cr>", "Clangd: symbolinfo")
 				map("<leader>cA", "<cmd>ClangdAST<cr>", "Clangd: visa AST")

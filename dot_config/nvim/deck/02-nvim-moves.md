@@ -127,6 +127,24 @@ Examples: `ci"` change the string, `da(` delete a call's arguments with the pare
 | `@a` / `@@` | play macro `a` / play the last macro again |
 | `5@a` | play it five times |
 
+## Ask, run, and the same comfort in every language
+
+| Keys | Does |
+| ---- | ---- |
+| `Space aq` | **Ask** Claude (Haiku) in a float; the function under the cursor, its errors, and X-ray (when stopped) come along |
+| `Space aq` in visual | ask about just the selected lines |
+| `Space ae` | explain the diagnostic under the cursor, with the smallest fix |
+| `:Ask question` | ask from the command line |
+| in Ask | `⏎` send · `⇧⏎` new line · `Tab` to the answers · `y` yank code · `C-n` new chat · `C-c` stop · `q` hide |
+| `Space cr` | **run this file**: Python, TS/JS, Go, C, C++, Java, Lua, shell (Rust: `cargo run`) · `q` closes the output |
+| `Space ci` | inlay hints on/off (grey types and parameter names), any language |
+| `K` | docs for the name under the cursor (Rust: `K K` opens the lens) |
+| `gd` `gr` `gi` | definition, references, implementations |
+| `Space ca` · `Space rn` | code actions · rename everywhere |
+| `Space mp` | format now (saving formats too) |
+
+The statusline always shows the few keys that fit where the cursor is; `:Hints` hides them.
+
 ## Command line gems
 
 | Command | Does |

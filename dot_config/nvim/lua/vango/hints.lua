@@ -4,7 +4,8 @@
 --   stepping in the debugger   F10 over · F11 into · F12 out · F5 continue · Space dx memory
 --   on a borrow error          Space Rw why not? · Space ca fixes · ]d next error
 --   on a Rust symbol           K K lens · gd definition · Space dd debug
---   anywhere else              Space r cheat sheet · Space ? every key
+--   on a symbol, other langs   K docs · gd definition · gr references · Space aq ask
+--   anywhere else              Space cr run · Space aq ask · Space r cheat sheet
 --
 -- `:Hints` turns it off and on (vim.g.vango_hints).
 
@@ -20,6 +21,22 @@ local function stopped()
 end
 
 local BORROW = { E0382 = true, E0499 = true, E0502 = true, E0505 = true, E0506 = true, E0597 = true, E0716 = true, E0373 = true }
+
+-- a word under the cursor that isn't inside a comment or string
+local function on_symbol(buf)
+  local word = vim.fn.expand("<cword>")
+  if not word:match("^[%a_][%w_]*$") then
+    return false
+  end
+  local pos = vim.api.nvim_win_get_cursor(0)
+  local ok, caps = pcall(vim.treesitter.get_captures_at_pos, buf, pos[1] - 1, pos[2])
+  for _, c in ipairs(ok and caps or {}) do
+    if c.capture:find("comment") or c.capture:find("string") then
+      return false
+    end
+  end
+  return true
+end
 
 -- the hints for this moment: { {keys, what}, … }
 function M.items()
@@ -44,25 +61,32 @@ function M.items()
     worst = (not worst or d.severity < worst) and d.severity or worst
   end
   if worst then
-    local out = { { "Space ca", "fixes" }, { "]d", "next" } }
+    local out = { { "Space ca", "fixes" }, { "Space ae", "explain" }, { "]d", "next" } }
     if ft == "rust" then
       table.insert(out, 2, { "Space Rd", "full message" })
     end
     return out
   end
   if ft == "rust" then
-    local word = vim.fn.expand("<cword>")
-    local pos = vim.api.nvim_win_get_cursor(0)
-    local in_comment = false
-    for _, c in ipairs(vim.treesitter.get_captures_at_pos(buf, pos[1] - 1, pos[2])) do
-      in_comment = in_comment or c.capture:find("comment") ~= nil
-    end
-    if word:match("^[%a_][%w_]*$") and not in_comment then
+    if on_symbol(buf) then
       return { { "K K", "lens" }, { "gd", "definition" }, { "Space dd", "debug" }, { "Space r", "cheat sheet" } }
     end
     return { { "Space Rr", "run" }, { "Space dd", "debug" }, { "Space r", "cheat sheet" } }
   end
-  return { { "Space r", "cheat sheet" }, { "Space ?", "every key" } }
+  -- every other language: the same few moves, through its language server
+  local has_lsp = #vim.lsp.get_clients({ bufnr = buf }) > 0
+  local runs = require("vango.run").RUNNERS[ft] ~= nil
+  if has_lsp and on_symbol(buf) then
+    return { { "K", "docs" }, { "gd", "definition" }, { "gr", "references" }, { "Space aq", "ask" } }
+  end
+  local out = {}
+  if runs then
+    out[#out + 1] = { "Space cr", "run" }
+  end
+  out[#out + 1] = { "Space aq", "ask" }
+  out[#out + 1] = { "Space r", "cheat sheet" }
+  out[#out + 1] = { "Space ?", "every key" }
+  return out
 end
 
 -- a statusline string: keys in the accent, words dim

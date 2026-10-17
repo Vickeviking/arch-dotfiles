@@ -102,6 +102,23 @@ return {
 				map("<leader>ca", vim.lsp.buf.code_action, "Code actions")
 				map("<C-j>", vim.diagnostic.goto_next, "Next diagnostic")
 				map("<C-k>", vim.diagnostic.goto_prev, "Prev diagnostic")
+
+				-- every language gets what Rust has: inlay hints (types, parameter
+				-- names) on by default, a toggle, and a bordered K hover
+				local client = vim.lsp.get_client_by_id(ev.data.client_id)
+				if client and client:supports_method("textDocument/inlayHint") and vim.g.vango_inlay ~= false then
+					pcall(vim.lsp.inlay_hint.enable, true, { bufnr = buf })
+				end
+				map("<leader>ci", function()
+					local on = not vim.lsp.inlay_hint.is_enabled({ bufnr = buf })
+					vim.lsp.inlay_hint.enable(on, { bufnr = buf })
+					vim.notify("Inlay hints " .. (on and "on" or "off"))
+				end, "Toggle inlay hints")
+				if vim.bo[buf].filetype ~= "rust" then -- Rust's K is the lens (rust.lua)
+					map("K", function()
+						vim.lsp.buf.hover({ border = "rounded", max_width = 90 })
+					end, "Docs for the symbol")
+				end
 			end,
 		})
 
@@ -133,6 +150,9 @@ return {
 			"stylelint_lsp",
 			"lua_ls", -- this config (lazydev adds the nvim API types)
 			"gopls",
+			"bashls", -- sh/bash/zsh, with shellcheck diagnostics
+			"taplo", -- TOML: Cargo.toml, pyproject.toml
+			"dockerls",
 		}
 
 		-- Per-server handlers
@@ -160,6 +180,8 @@ return {
 					"--limit-results=50",
 				},
 				init_options = {
+					-- single files without compile_commands.json still get warnings
+					fallbackFlags = { "-Wall", "-Wextra" },
 					clangdFileStatus = true,
 					usePlaceholders = true,
 					completeUnimported = false,
@@ -169,6 +191,21 @@ return {
 		end
 
 		-- rust_analyzer handler removed - rustaceanvim plugin handles rust-analyzer configuration
+
+		-- jdtls 1.57 can't run on Java 27 (its bytecode weaver stops at class
+		-- version 70), so it runs on an older JDK when one is installed next to
+		-- the default: `sudo pacman -S jdk25-openjdk` (the default stays 27)
+		handlers["jdtls"] = function()
+			local opts = { capabilities = caps }
+			for _, v in ipairs({ "25", "21" }) do
+				local home = "/usr/lib/jvm/java-" .. v .. "-openjdk"
+				if vim.uv.fs_stat(home .. "/bin/java") then
+					opts.cmd_env = { JAVA_HOME = home }
+					break
+				end
+			end
+			setup_server("jdtls", opts)
+		end
 
 		handlers["basedpyright"] = function()
 			setup_server("basedpyright", {
@@ -211,8 +248,60 @@ return {
 		end
 
 		handlers["ts_ls"] = function()
+			-- inlay hints like Rust's: parameter names, inferred types, return types
+			local hints = {
+				includeInlayParameterNameHints = "literals",
+				includeInlayFunctionParameterTypeHints = true,
+				includeInlayVariableTypeHints = true,
+				includeInlayVariableTypeHintsWhenTypeMatchesName = false,
+				includeInlayPropertyDeclarationTypeHints = true,
+				includeInlayFunctionLikeReturnTypeHints = true,
+				includeInlayEnumMemberValueHints = true,
+			}
 			setup_server("ts_ls", {
 				capabilities = caps,
+				settings = {
+					typescript = { inlayHints = hints },
+					javascript = { inlayHints = hints },
+				},
+			})
+		end
+
+		handlers["gopls"] = function()
+			setup_server("gopls", {
+				capabilities = caps,
+				settings = {
+					gopls = {
+						hints = {
+							assignVariableTypes = true,
+							compositeLiteralFields = true,
+							constantValues = true,
+							functionTypeParameters = true,
+							parameterNames = true,
+							rangeVariableTypes = true,
+						},
+						staticcheck = true,
+					},
+				},
+			})
+		end
+
+		handlers["taplo"] = function()
+			-- taplo's schema catalog download is broken upstream; Cargo.toml's
+			-- schema is given directly, so K and completion know its keys
+			setup_server("taplo", {
+				capabilities = caps,
+				settings = {
+					evenBetterToml = {
+						schema = {
+							enabled = true,
+							associations = {
+								[".*/Cargo\\.toml$"] = "https://json.schemastore.org/cargo.json",
+								[".*/pyproject\\.toml$"] = "https://json.schemastore.org/pyproject.json",
+							},
+						},
+					},
+				},
 			})
 		end
 

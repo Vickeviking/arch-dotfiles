@@ -140,7 +140,54 @@ local function tab_overview()
   -- the first block is the module path (`lens_demo`); the lens title says enough
   md = md:gsub("^%s*```rust\n[%w_:]+\n```\n*", "", 1)
   for _, l in ipairs(vim.split(md, "\n", { plain = true })) do
+    -- `size = 24 (0x18), align = 0x8, needs Drop` → `24 bytes · align 8 · needs Drop`
+    local sz, al, rest = l:match("^size = (%d+)[^,]*, align = 0x(%x+)(.*)$")
+    if sz then
+      l = ("%s bytes · align %d%s"):format(sz, tonumber(al, 16), (rest:gsub(",%s*", " · ")))
+    end
     table.insert(lines, l)
+  end
+  if state.type_md then
+    -- the type's own doc: its first prose paragraphs, code blocks left out
+    local doc, in_code, sig = {}, false, nil
+    for _, l in ipairs(vim.split(state.type_md, "\n", { plain = true })) do
+      if l:match("^```") then
+        in_code = not in_code
+      elseif in_code then
+        if l:match("^%s*pub ") or l:match("^%s*struct ") or l:match("^%s*enum ") then
+          sig = sig or vim.trim(l):gsub("%s*{$", "")
+        end
+      elseif l:match("^%-%-%-") or l:match("^#") then
+        if #doc > 0 then
+          break
+        end
+      elseif not (l:match("^size =") or l:match("[Dd]rop$") or l:match("^Implements notable")
+        or l:match("^%s*$") and #doc == 0) then
+        -- links read as plain words here
+        doc[#doc + 1] = (l:gsub("%[([^%]]+)%]%b()", "%1"):gsub("%[`?([^%]]-)`?%]", "`%1`"))
+      end
+      if #doc >= 8 then
+        break
+      end
+    end
+    while #doc > 0 and vim.trim(doc[#doc]) == "" do
+      table.remove(doc)
+    end
+    if #doc > 0 or sig then
+      table.insert(lines, "")
+      table.insert(lines, "## The type: " .. state.base .. (state.type_crate and ("  ·  " .. state.type_crate) or ""))
+      table.insert(lines, "")
+      if sig then
+        vim.list_extend(lines, { "```rust", sig, "```", "" })
+      end
+      vim.list_extend(lines, doc)
+    end
+  end
+  if state.xray_note then
+    table.insert(lines, "")
+    table.insert(lines, "## In the debugger")
+    table.insert(lines, "")
+    table.insert(lines, "> 󰈈 X-ray shows " .. state.xray_note)
   end
   local glance = {}
   if state.summary then
@@ -155,7 +202,11 @@ local function tab_overview()
         inherent = inherent + #i.methods
       end
     end
-    table.insert(glance, ("- %d methods of its own, %d trait impls"):format(inherent, traits))
+    if inherent + traits == 0 then
+      table.insert(glance, "- no impl blocks of its own yet")
+    else
+      table.insert(glance, ("- %d methods of its own, %d trait impls"):format(inherent, traits))
+    end
   end
   if state.derives and #state.derives > 0 then
     table.insert(glance, "- derives " .. table.concat(state.derives, ", "))
@@ -255,7 +306,11 @@ local function tab_layout()
     if #lines > 0 then
       table.insert(lines, "")
     end
-    table.insert(lines, ("# Instantiations in this crate (%d)"):format(#insts))
+    if state.generic or #insts > 1 then
+      table.insert(lines, ("# Instantiations in this crate (%d)"):format(#insts))
+    else
+      table.insert(lines, "# Measured by rustc")
+    end
     table.insert(lines, "")
     table.insert(lines, ("From the last nightly build, %s. `r` rebuilds."):format(os.date("%H:%M %d/%m", state.sizes._mtime)))
     table.insert(lines, "")
@@ -277,15 +332,23 @@ local function tab_layout()
   if #lines == 0 then
     if state.layout_pending then
       lines = { "_asking rust-analyzer for the layout…_" }
-    elseif state.generic or state.kind == "type" then
+    elseif state.generic then
       lines = {
         "# No layout yet",
         "",
-        "This type is generic (or rust-analyzer can't see a concrete instance here), so its size",
-        "depends on the types filled in. Press `r` to build the crate once with nightly and record",
-        "every instantiation it really uses, like `Node<String, u64>`.",
+        "This type is generic, so its size depends on the types filled in. Press `r` to build",
+        "the crate once with nightly and record every instantiation it really uses,",
+        "like `Node<String, u64>`.",
         "",
         "Hovering a variable of a concrete type (`let n: Node<String, u64>`) also works right away.",
+      }
+    elseif state.kind == "type" then
+      lines = {
+        "# No layout yet",
+        "",
+        "rust-analyzer couldn't size this one (a field's type comes from a crate it can't",
+        "lay out). Press `r` to let rustc measure it: one nightly build records the real",
+        "layout, field order and padding included.",
       }
     else
       lines = { "# No layout", "", "Nothing with a memory layout under the cursor." }
@@ -444,7 +507,14 @@ local function run_lens_sizes(buf, quiet, on_done)
     state.sizes_status = "building with nightly to record layouts…"
     refresh()
   end
-  vim.system({ "lens-sizes", "--manifest-path", root .. "/Cargo.toml" }, { text = true }, function(res)
+  local cmd = { "lens-sizes", "--manifest-path", root .. "/Cargo.toml" }
+  -- a file under src/bin/ is its own binary: measure that one
+  local file = vim.api.nvim_buf_get_name(buf)
+  local bin = file:match("/src/bin/([^/]+)%.rs$") or file:match("/src/bin/([^/]+)/main%.rs$")
+  if bin then
+    vim.list_extend(cmd, { "--bin", bin })
+  end
+  vim.system(cmd, { text = true }, function(res)
     vim.schedule(function()
       if res.code == 0 then
         state.sizes = load_sizes(buf)
@@ -497,6 +567,46 @@ local TABS = {
   trait = { { "Overview", tab_overview }, { "Implementors", tab_traits, true } },
   other = { { "Overview", tab_overview } },
 }
+
+-- typeDefinition can answer several types (`Vec<String>` → Vec and String, and
+-- inside macros like #[tokio::main] even the fn's return type): take the one
+-- named like the value's type
+local function pick_def(defs, base)
+  if not defs then
+    return nil
+  end
+  if defs.uri or defs.targetUri then
+    return defs
+  end
+  for _, d in ipairs(defs) do
+    local r = d.targetSelectionRange or d.range
+    local fname = vim.uri_to_fname(d.targetUri or d.uri)
+    local ok, lines = pcall(vim.fn.readfile, fname, "", r.start.line + 1)
+    local line = ok and lines[r.start.line + 1] or ""
+    local word = line:sub(r.start.character + 1):match("^[%w_]+")
+    if word and word == base then
+      return d
+    end
+  end
+  return defs[1]
+end
+
+-- the type behind a value: its docs (hover at the definition) and what X-ray
+-- shows for it in the debugger
+local function learn_type(client, buf, my, d, at)
+  local fname = vim.uri_to_fname(d.targetUri or d.uri)
+  state.xray_note, state.type_crate = require("vango.lens.xray_note").note(fname, state.base)
+  if not at then
+    return
+  end
+  request(client, "textDocument/hover", at, buf, my, function(_, hover)
+    local md = hover and hover.contents and (hover.contents.value or hover.contents)
+    if type(md) == "string" then
+      state.type_md = md
+      refresh()
+    end
+  end)
+end
 
 local function fetch_impls(client, buf, my, params)
   state.impls_pending = true
@@ -563,12 +673,13 @@ function M.open()
           local d = defs and (defs[1] or defs)
           if d and (d.uri or d.targetUri) then
             state.derives = impls.derives(d)
+            learn_type(client, buf, my, d, nil)
             refresh()
           end
         end)
       else
         request(client, "textDocument/typeDefinition", params, buf, my, function(_, defs)
-          local d = defs and (defs[1] or defs)
+          local d = pick_def(defs, state.base)
           if not (d and (d.uri or d.targetUri)) then
             state.impls = {}
             refresh()
@@ -576,7 +687,9 @@ function M.open()
           end
           state.derives = impls.derives(d)
           local r = d.targetSelectionRange or d.range
-          fetch_impls(client, buf, my, { textDocument = { uri = d.targetUri or d.uri }, position = r.start })
+          local at = { textDocument = { uri = d.targetUri or d.uri }, position = r.start }
+          fetch_impls(client, buf, my, at)
+          learn_type(client, buf, my, d, at)
         end)
       end
     elseif h.kind == "trait" then
@@ -621,7 +734,12 @@ function M.K()
     pcall(vim.api.nvim_win_close, w, true)
     M.open()
   else
-    vim.lsp.buf.hover({ border = "rounded" })
+    vim.lsp.buf.hover({
+      border = "rounded",
+      -- the way into the lens, written on the hover itself
+      title = { { " K ", "DeckFooterKey" }, { "again: lens ", "Comment" } },
+      title_pos = "right",
+    })
   end
 end
 

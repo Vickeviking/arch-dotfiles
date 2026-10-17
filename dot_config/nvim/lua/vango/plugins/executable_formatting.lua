@@ -26,6 +26,10 @@ return {
 				cpp = { "clang-format" },
 				java = { "google-java-format" },
 				rust = { "rustfmt" },
+				go = { "gofmt" },
+				sh = { "shfmt" },
+				bash = { "shfmt" },
+				toml = { "taplo" },
 				vue = prettier,
 			},
 			format_after_save = function(bufnr)
