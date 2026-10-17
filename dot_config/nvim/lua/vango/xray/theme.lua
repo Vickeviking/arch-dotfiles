@@ -13,15 +13,16 @@ M.KIND_HL = {
   weak = "XrayWeak",
   borrow = "XrayBorrow",
   borrow_mut = "XrayBorrowMut",
+  atomic = "XrayAtomic",
 }
 
 -- the arrow drawn for each kind, inline and in the legend
-M.ARROW = { owns = "─▶", pointer = "─▶", shared = "═▶", weak = "┄▶", borrow = "─▷", borrow_mut = "━▶" }
+M.ARROW = { owns = "─▶", pointer = "─▶", shared = "═▶", weak = "┄▶", borrow = "─▷", borrow_mut = "━▶", atomic = "╍▶" }
 
-M.WORD = { owns = "owns", pointer = "points", shared = "shares", weak = "weak", borrow = "borrows", borrow_mut = "borrows mut" }
+M.WORD = { owns = "owns", pointer = "points", shared = "shares", weak = "weak", borrow = "borrows", borrow_mut = "borrows mut", atomic = "atomic" }
 
 -- which kind wins when several meet on one line of the map
-M.RANK = { weak = 1, borrow = 2, owns = 3, pointer = 3, shared = 4, borrow_mut = 5 }
+M.RANK = { weak = 1, borrow = 2, atomic = 3, owns = 3, pointer = 3, shared = 4, borrow_mut = 5 }
 
 M.TONE_HL = { plain = "XrayValue", ok = "XrayOk", warn = "XrayWarn", alert = "XrayAlert", muted = "XrayDim" }
 
@@ -33,6 +34,7 @@ function M.apply()
   local hl = {
     XrayOwns = { fg = a[13] },
     XrayShares = { fg = a[12] },
+    XrayAtomic = { fg = a[15] },
     XrayWeak = { fg = p.muted },
     XrayBorrow = { fg = p.ok },
     XrayBorrowMut = { fg = p.alert, bold = true },

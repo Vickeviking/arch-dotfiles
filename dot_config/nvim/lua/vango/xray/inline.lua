@@ -72,7 +72,7 @@ local function chunks_for(g, s, moved_into, many)
       add(" +" .. (#edges - 2), "XrayDim")
       break
     end
-    local own = e.kind == "owns" or e.kind == "shared"
+    local own = e.kind == "owns" or e.kind == "shared" or e.kind == "atomic"
     local sep = (#out > 1 + (many and 1 or 0)) and "  " or ""
     add(sep .. theme.ARROW[e.kind] .. " " .. map.name_of(g, e, own), theme.KIND_HL[e.kind])
     -- the target's state matters for shared things: RefCell flags, locks

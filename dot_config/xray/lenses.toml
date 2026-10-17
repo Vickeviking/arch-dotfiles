@@ -1,0 +1,14 @@
+# X-ray lenses for your own types (and any crate the built-ins don't cover).
+# Read at every debugger stop: save this file and the next step uses it.
+#
+# [[lens]]
+# type = "my_crate::geometry::Matrix"   # the type's path; generics are ignored
+# summary = "{rows}×{cols} matrix"      # {field.path} is that field's reading
+# facts = ["cells: {data|count}", "dirty: {dirty}"]   # {x|count}: x's element count
+# hide = ["scratch"]                    # fields left out when there's no summary
+#
+# Built in already: std (Vec, String, Box, Rc/Arc/Weak, RefCell, Mutex,
+# HashMap, BTreeMap, Option, Result, atomics, Duration), parking_lot,
+# crossbeam-epoch, tokio, serde_json, ron, anyhow, tracing, http, hyper,
+# reqwest, url, bytes, axum, sqlx, rayon, rand, uuid, chrono, and
+# ConcurrentHashMap ports. Anything else reads as tidied fields.

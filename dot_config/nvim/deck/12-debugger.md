@@ -56,6 +56,23 @@ let words = vec![…];         ↷ moved into taken
 
 On a wide screen the **sidebar** opens by itself at the first stop: the memory map in a split on the right, following every step without taking focus. `q` in it hides it for the session, Enter opens the full panel.
 
+Crates read the way you'd say them, not as their internals:
+
+| Crate | Shows |
+| ----- | ----- |
+| parking_lot | `locked · threads parked`, `2 readers`, guards as borrows |
+| crossbeam-epoch | `Atomic`/`Shared`/`Owned` followed to their target, `tag 1` |
+| tokio | `task worker · idle on recv`, mpsc `1/8 queued`, oneshot, Mutex, Notify |
+| serde_json / ron | the value as JSON / RON |
+| anyhow | `saving config.toml ← disk full` |
+| tracing | `span "request" · INFO`, levels |
+| http, hyper, reqwest, url, bytes | `404 Not Found`, `GET /health`, headers, URL parts |
+| axum, sqlx, rayon | routes, `0/5 connections`, worker threads |
+| uuid, chrono, rand | `550e8400-…`, `2026-10-17 20:43:12 UTC`, `1h 30m 5s` |
+| ConcurrentHashMap ports | bins, entries, `Moved` forwarding mid-resize |
+
+Any other crate reads as its fields, tidied. For your own types add a lens in `~/.config/xray/lenses.toml` (examples inside); it's read at every stop.
+
 `Space dx` opens the full panel. Its tabs:
 - **Memory**: frames as cards on the left, heap blocks as boxes on the right, arrows between them. Boxes that point at each other name each other by letter.
 - **Frames**: every thread, and what the others are waiting on.

@@ -272,7 +272,7 @@ local function path_to(g, e_end, depth)
   local b = g.blocks[e_end.id + 1]
   for _, i in ipairs(b.incoming or {}) do
     local e = g.edges[i + 1]
-    if e.kind == "owns" or e.kind == "shared" then
+    if e.kind == "owns" or e.kind == "shared" or e.kind == "atomic" then
       local up = path_to(g, e.from, depth + 1)
       return up and (up .. (e_end.path or "")) or nil
     end
@@ -449,10 +449,12 @@ local function box_rows(g, b, labels, w)
   end
 
   local outs = block_out(g, b)
+  -- the edge leaving a row: `.next`, or `.bins[0]` / `.0.value` when the
+  -- rows are a list's elements or an enum payload's fields
   local function target_of(path)
     for _, e in ipairs(outs) do
       local p = e.from.path or ""
-      if p == path or p:sub(1, #path + 1) == path .. "." then
+      if p == path or p:sub(1, #path + 1) == path .. "." or (#path > 0 and p:sub(-#path) == path) or p:find(path .. ".", 1, true) then
         return e
       end
     end
@@ -525,14 +527,17 @@ local function box_rows(g, b, labels, w)
       line({ { clip(v, inner), "XrayValue" } })
     end
   else
-    -- a struct behind a Box (or anything else): its fields
+    -- a struct behind a Box (or anything else): what a lens says, then its fields
     local items = b.items or {}
+    if b.summary and b.summary ~= "" and not b.summary:match("^{") and #items > 0 then
+      line({ { clip(b.summary, inner), "XrayValue" } })
+    end
     -- a Box of a plain value: its one child is the value itself (`*0`)
     if #items == 1 and items[1].name:match("^%*") then
       items = {}
     end
     if #items == 0 then
-      line({ { clip(b.summary, inner), "XrayValue" } })
+      line({ { b.summary ~= "" and clip(b.summary, inner) or "contents not read", b.summary ~= "" and "XrayValue" or "XrayFaint" } })
     end
     local nw = 4
     for _, it in ipairs(items) do
@@ -546,8 +551,14 @@ local function box_rows(g, b, labels, w)
       local e = target_of("." .. it.name) or target_of(it.name)
       local segs = { { pad(it.name, nw) .. " ", "XrayName" } }
       if e then
-        segs[#segs + 1] = { clip(it.value, 8) .. " ", "XrayDim" }
-        segs[#segs + 1] = { theme.ARROW[e.kind] .. " " .. describe(g, e.to, labels), theme.KIND_HL[e.kind] }
+        -- the arrow says where it points; keep the row's own words when they add something
+        local arrow = theme.ARROW[e.kind] .. " " .. describe(g, e.to, labels)
+        local room = inner - nw - 1 - len(arrow) - 1
+        local v = it.value:match("^{") and "" or it.value
+        if v ~= "" and room >= 6 then
+          segs[#segs + 1] = { clip(v, room) .. " ", "XrayDim" }
+        end
+        segs[#segs + 1] = { arrow, theme.KIND_HL[e.kind] }
       else
         segs[#segs + 1] = { clip(it.value, inner - nw - 1), "XrayValue" }
       end
@@ -641,7 +652,7 @@ function M.render(g, opts)
     placed[b.id] = true
     order[#order + 1] = b
     for _, e in ipairs(block_out(g, b)) do
-      if e.kind == "owns" or e.kind == "shared" then
+      if e.kind == "owns" or e.kind == "shared" or e.kind == "atomic" then
         place(block_of(g, e.to))
       end
     end
@@ -840,7 +851,7 @@ function M.render_compact(g, opts)
     placed[b.id] = true
     order[#order + 1] = b
     for _, e in ipairs(block_out(g, b)) do
-      if e.kind == "owns" or e.kind == "shared" then
+      if e.kind == "owns" or e.kind == "shared" or e.kind == "atomic" then
         place(block_of(g, e.to))
       end
     end
