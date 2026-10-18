@@ -17,6 +17,18 @@ plugins=(
 
 source $ZSH/oh-my-zsh.sh
 command -v starship >/dev/null && eval "$(starship init zsh)"
+# zoxide: `z <part of a path>` jumps there · atuin: Ctrl-R searches all history (Up stays normal)
+command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
+command -v atuin >/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
+# yazi: `y` opens the file manager and leaves you in the folder you quit in
+y() {
+	local tmp cwd
+	tmp="$(mktemp -t yazi-cwd.XXXXXX)"
+	yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd <"$tmp"
+	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
 
 # Check archlinux plugin commands here
 # https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/archlinux
@@ -144,6 +156,18 @@ plugins=(
 
 source $ZSH/oh-my-zsh.sh
 command -v starship >/dev/null && eval "$(starship init zsh)"
+# zoxide: `z <part of a path>` jumps there · atuin: Ctrl-R searches all history (Up stays normal)
+command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
+command -v atuin >/dev/null && eval "$(atuin init zsh --disable-up-arrow)"
+# yazi: `y` opens the file manager and leaves you in the folder you quit in
+y() {
+	local tmp cwd
+	tmp="$(mktemp -t yazi-cwd.XXXXXX)"
+	yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd <"$tmp"
+	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
 
 # Check archlinux plugin commands here
 # https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/archlinux
