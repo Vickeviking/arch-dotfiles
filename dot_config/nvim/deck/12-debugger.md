@@ -92,6 +92,8 @@ Enter jumps to the declaration or frame. `[` / `]` step back and forward through
 4. Stuck on what you see? `Space Space` asks Claude with X-ray's view of the stack and heap attached.
 
 Threads and locks over time (not one stop): `Space ds` opens a labsync recording in Lockscope (see Concurrency).
+
+**Structure movie** (`Space dM`): every stop of the session so far as one animated page in the browser. Lists come out as chains, trees as trees (left/right from the field names), other data in columns by distance from the stack. Nodes slide when links change, new ones grow out of their parent (green), changed ones glow (orange) with what changed in words (`Node 8: next → 9`), freed ones fade (red). ←/→ steps, space plays. From a shell: `xray-movie` (newest session) or `xray-movie DIR` (recorded stops).
 5. `Space dq` when done.
 
 ## lldb in the REPL

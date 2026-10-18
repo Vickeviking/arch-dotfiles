@@ -58,4 +58,20 @@ function M.open()
   end)
 end
 
+-- Structure movie (Space dM): every stop of the debug session so far, animated:
+-- lists and trees laid out as lists and trees (xray-movie, genomlysning).
+function M.movie()
+  if vim.fn.executable("xray-movie") == 0 then
+    vim.notify("xray-movie isn't installed (cargo install --path ~/dev/project/genomlysning/crates/xray-movie)", vim.log.levels.WARN)
+    return
+  end
+  vim.system({ "xray-movie" }, { text = true }, function(r)
+    vim.schedule(function()
+      if r.code ~= 0 then
+        vim.notify((r.stderr or ""):gsub("^xray%-movie: ", "Structure movie: "), vim.log.levels.INFO)
+      end
+    end)
+  end)
+end
+
 return M

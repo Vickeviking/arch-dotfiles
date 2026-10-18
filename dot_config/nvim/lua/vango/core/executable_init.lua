@@ -44,3 +44,8 @@ end, { desc = "Run this file" })
 vim.keymap.set("n", "<leader>ds", function()
 	require("vango.lab").open()
 end, { desc = "Lockscope: open a labsync recording" })
+
+-- Structure movie: the debug session's stops animated (Space dM)
+vim.keymap.set("n", "<leader>dM", function()
+	require("vango.lab").movie()
+end, { desc = "Structure movie of this debug session" })
