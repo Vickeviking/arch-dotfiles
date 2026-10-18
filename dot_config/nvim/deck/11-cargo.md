@@ -36,10 +36,7 @@ From nvim: `Space ob` build · `Space or` run · `Space ot` test · `Space tn` n
 | Tool | Finds |
 | ---- | ----- |
 | `cargo +nightly miri test` | undefined behavior, out-of-bounds, data races, leaks in unsafe code |
-| `loom` | bugs in specific interleavings: tries *every* schedule of a small test (swap `std::sync` for `loom::sync`, wrap the test in `loom::model`) |
-| `shuttle` | same idea, random schedules: scales to bigger structures, failures replay from a seed |
-| `deloxide` | deadlocks while the program runs (tracked Mutex/RwLock), lock-order report, thread/lock graph in the browser |
-| `cargo mutants` | plants small bugs and checks your tests catch them (`--test-tool=nextest`, `--in-diff` for changed code only) |
+| `loom` | bugs in specific interleavings of concurrent code |
 | `cargo fuzz run target` | crashes from random inputs (libFuzzer) |
 | `proptest` / `quickcheck` | properties over generated inputs |
 | `cargo audit` | dependencies with known vulnerabilities |
@@ -53,8 +50,7 @@ From nvim: `Space ob` build · `Space or` run · `Space ot` test · `Space tn` n
 | `criterion` | statistically sound benchmarks |
 | `perf stat -e cache-misses ./target/release/x` | hardware counters |
 | `heaptrack` / `dhat` | allocations: who, how many, how big |
-| `hyperfine 'cmd a' 'cmd b'` | compare two commands (`-w 3 -r 50`: warm-up, 50 runs) |
-| `samply record ./target/release/x` | CPU profile in the Firefox Profiler, one timeline per thread: see why parallel isn't 4× faster |
+| `hyperfine 'cmd a' 'cmd b'` | compare two commands |
 
 ## Toolchains
 

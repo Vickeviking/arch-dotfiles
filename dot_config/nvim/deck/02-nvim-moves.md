@@ -146,17 +146,6 @@ Examples: `ci"` change the string, `da(` delete a call's arguments with the pare
 
 The statusline always shows the few keys that fit where the cursor is; `:Hints` hides them.
 
-## Terminal tools
-
-| Keys | Does |
-| ---- | ---- |
-| `z hash` | jump to the folder you visit most that matches (zoxide); `zi` picks from a list |
-| `Ctrl-R` | search every command you've ever run (atuin); Up arrow stays as usual |
-| `y` | yazi file manager; quit and you're in that folder |
-| `Space y` / `Space Y` | yazi inside nvim, at this file / in the working dir |
-| `jj` | Jujutsu log; `jj new`, `jj describe -m`, `jj undo` (anything), `jj git push` |
-| `difft a b` | syntax-aware diff (jj uses it automatically) |
-
 ## Command line gems
 
 | Command | Does |
