@@ -1,7 +1,7 @@
 -- RustOwl: rest the cursor on a variable in Rust and it underlines where the
 -- value lives, where it's borrowed (& / &mut), moved, and where a borrow
 -- outlives it. Binary: ~/.rustowl (prebuilt v0.4.0 + its own toolchain),
--- linked as ~/.local/bin/rustowl. Space Ro toggles it; legend in the deck (Ownership).
+-- linked as ~/.local/bin/rustowl. Off by default, Space Ro toggles it; legend in the deck (Ownership).
 return {
 	"cordx56/rustowl",
 	version = "*",
@@ -11,7 +11,7 @@ return {
 		local a = p.ansi
 		return {
 			auto_attach = true,
-			auto_enable = true,
+			auto_enable = false, -- off by default; Space Ro turns it on
 			idle_time = 500,
 			highlight_style = "undercurl",
 			colors = {
