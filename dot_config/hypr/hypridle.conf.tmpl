@@ -1,3 +1,47 @@
+{{ if eq .chezmoi.hostname "vango-arch-thinkpad" -}}
+# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
+# Hypridle
+# Original config submitted by https://github.com/SherLock707
+#
+# 2026-09-02: timeouts sänkta från 3 h och suspend aktiverad.
+# Maskinen ska inte längre vara "alltid på".
+
+$iDIR="$HOME/.config/swaync/images/ja.png"
+
+general {
+    lock_cmd = pidof hyprlock || hyprlock            # lås om det inte redan körs
+    before_sleep_cmd = loginctl lock-session         # lås alltid innan sleep
+    after_sleep_cmd = hyprctl dispatch dpms on       # väck skärmen efter sleep
+    ignore_dbus_inhibit = false                      # respektera idle-inhibit (video, möten, steam)
+}
+
+# 8 min - varning
+listener {
+    timeout = 480
+    on-timeout = notify-send -i $iDIR " You are idle!"
+    on-resume = notify-send -i $iDIR " Oh! you're Back" " Hello !!!"
+}
+
+# 10 min - lås skärmen
+listener {
+    timeout = 600
+    on-timeout = loginctl lock-session
+}
+
+# 10.5 min - släck skärmen
+listener {
+    timeout = 630
+    on-timeout = hyprctl dispatch dpms off
+    on-resume = hyprctl dispatch dpms on
+}
+
+# 20 min - suspend
+listener {
+    timeout = 1200
+    on-timeout = systemctl suspend
+    on-resume = notify-send -i $iDIR " Oh! you're back" "Hello !!!"
+}
+{{ else -}}
 # /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
 # Hypridle 
 # Original config submitted by https://github.com/SherLock707                                                       
@@ -61,3 +105,4 @@ listener {
    # on-timeout = systemctl suspend # command to run when timeout has passed
     # on-resume = notify-send -i $iDIR " Oh! you're back" "Hello !!!"  # command to run when activity is detected after timeout has fired.
 # }
+{{ end -}}

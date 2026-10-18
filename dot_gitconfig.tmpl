@@ -1,0 +1,17 @@
+{{ if eq .chezmoi.hostname "vango-arch-thinkpad" -}}
+[user]
+	name = vango
+	email = viktorlilienberg@gmail.com
+[credential "https://github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/usr/bin/gh auth git-credential
+{{ else -}}
+[user]
+	name = vango
+	email = viktorlilienberg@gmail.com
+[credential]
+	helper = cache
+{{ end -}}
