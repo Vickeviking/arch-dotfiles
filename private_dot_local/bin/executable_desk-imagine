@@ -2,6 +2,7 @@
 """desk-imagine: generate an image with the OpenAI Images API.
 
   desk-imagine "prompt" -o out.png [--size 1536x1024] [--quality low|medium|high] [--model gpt-image-1.5]
+  desk-imagine "prompt" -o out.png --ref photo.jpg [--ref other.jpg]   draw from reference images
 
 The key is read from ~/.config/desk/image-api.env (OPENAI_API_KEY=...), never printed.
 """
@@ -28,14 +29,30 @@ def main():
     ap.add_argument("--quality", default="medium", choices=["low", "medium", "high"])
     ap.add_argument("--model", default="gpt-image-2.5-flare")
     ap.add_argument("--transparent", action="store_true", help="transparent background (PNG)")
+    ap.add_argument("--ref", action="append", default=[], help="reference image (repeatable): uses the edits endpoint")
     a = ap.parse_args()
 
     payload = {"model": a.model, "prompt": a.prompt, "size": a.size, "quality": a.quality, "n": 1}
     if a.transparent:
         payload.update(background="transparent", output_format="png")
-    body = json.dumps(payload).encode()
-    req = urllib.request.Request("https://api.openai.com/v1/images/generations", data=body, headers={
-        "Authorization": f"Bearer {key()}", "Content-Type": "application/json"})
+    if a.ref:   # multipart/form-data to the edits endpoint, one image[] part per reference
+        boundary = "deskimagine" + os.urandom(8).hex()
+        parts = []
+        for k, v in payload.items():
+            parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{k}"\r\n\r\n{v}\r\n'.encode())
+        for ref in a.ref:
+            mime = "image/png" if ref.lower().endswith(".png") else "image/jpeg"
+            with open(ref, "rb") as f:
+                data = f.read()
+            parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="image[]"; '
+                         f'filename="{os.path.basename(ref)}"\r\nContent-Type: {mime}\r\n\r\n'.encode() + data + b"\r\n")
+        body = b"".join(parts) + f"--{boundary}--\r\n".encode()
+        req = urllib.request.Request("https://api.openai.com/v1/images/edits", data=body, headers={
+            "Authorization": f"Bearer {key()}", "Content-Type": f"multipart/form-data; boundary={boundary}"})
+    else:
+        body = json.dumps(payload).encode()
+        req = urllib.request.Request("https://api.openai.com/v1/images/generations", data=body, headers={
+            "Authorization": f"Bearer {key()}", "Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=180) as r:
             data = json.load(r)
