@@ -62,7 +62,9 @@ return {
 				ensure_installed = {
 					"cpplint",
 					"clang-format",
-					"codelldb", -- the debugger for Rust, C and C++ (behind xray-dap)
+					-- the debugger for Rust, C and C++ (behind xray-dap). Pinned: 1.12.3's
+					-- lldb segfaults on vector<unique_ptr<T>> (seen on the ThinkPad 2026-10-18)
+					{ "codelldb", version = "v1.12.1" },
 					"debugpy", -- the Python debugger (nvim-dap-python)
 					-- rustfmt: not a mason package; provided by rustup/system (/usr/bin/rustfmt)
 					"protolint",

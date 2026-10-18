@@ -174,6 +174,21 @@ end
 
 -- transcript ------------------------------------------------------------------
 
+-- render-markdown redraws on events of the current buffer; the answers are
+-- written from outside (you're typing below), so ask it to redraw, at most
+-- every 60 ms while an answer streams in
+local redraw_timer
+local function rerender()
+  redraw_timer = redraw_timer or vim.uv.new_timer()
+  redraw_timer:start(60, 0, vim.schedule_wrap(function()
+    if S.buf and vim.api.nvim_buf_is_valid(S.buf) then
+      pcall(function()
+        require("render-markdown.api").render({ buf = S.buf })
+      end)
+    end
+  end))
+end
+
 local function tlines()
   return vim.api.nvim_buf_line_count(S.buf)
 end
@@ -184,6 +199,7 @@ local function append(lines)
   local empty = n == 1 and vim.api.nvim_buf_get_lines(S.buf, 0, 1, false)[1] == ""
   vim.api.nvim_buf_set_lines(S.buf, empty and 0 or n, -1, false, lines)
   vim.bo[S.buf].modifiable = false
+  rerender()
   return empty and 0 or n
 end
 
@@ -201,6 +217,7 @@ local function stream(text)
   local new = vim.split(last .. text, "\n", { plain = true })
   vim.api.nvim_buf_set_lines(S.buf, n - 1, n, false, new)
   vim.bo[S.buf].modifiable = false
+  rerender()
   follow()
 end
 
@@ -304,6 +321,7 @@ local function open_windows()
     vim.wo[S.win].winhighlight = require("vango.deck.theme").content_winhl .. ",FloatTitle:DeckTitle"
     vim.wo[S.win].wrap = true
     vim.wo[S.win].linebreak = true
+    vim.wo[S.win].breakindent = true
     vim.wo[S.win].conceallevel = 2
     vim.wo[S.win].cursorline = false
     vim.wo[S.win].statuscolumn = " "
