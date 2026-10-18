@@ -57,4 +57,21 @@ save("bell", bell(A5, .3))
 G6 = 1568.0
 save("pomodoro-done", mixdown(bell(C6, .5, .3), bell(E6, .5, .28, .11), bell(G6, .9, .26, .22)))
 save("break-done", mixdown(bell(G5, .35, .3), bell(C6, .6, .3, .14)))
+
+# Sam's purr: soft low rumble, about 26 pulses a second, swelling in and out over 2.4 s
+def purr(dur=2.4, gain=0.5):
+    rnd = random.Random(3)
+    n = int(RATE * dur)
+    out, lp = [], 0.0
+    for i in range(n):
+        t = i / RATE
+        lp += 0.035 * (rnd.uniform(-1, 1) - lp)          # low-passed noise
+        pulse = 0.5 + 0.5 * math.sin(2 * math.pi * 26 * t)
+        swell = math.sin(math.pi * t / dur) ** 0.8
+        tone = math.sin(2 * math.pi * 52 * t) * 0.35
+        out.append(gain * swell * pulse * (lp * 6 + tone))
+    return out
+
+
+save("purr", purr())
 print("desk sounds →", OUT)

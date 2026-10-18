@@ -76,6 +76,10 @@ window#waybar.empty #window { padding: 0; margin: 0; }
 #custom-pomodoro.focus { color: @t-accent; }
 #custom-pomodoro.break { color: @t-ok; }
 #custom-pomodoro.paused { color: @t-muted; }
+#custom-sam { padding: 0 6px; }
+#custom-sam.off { opacity: 0.35; }
+#custom-sam.focus { opacity: 0.6; }
+#custom-sam:hover { background: alpha(@t-text, 0.08); border-radius: 7px; }
 #custom-pomodoro:hover { background: alpha(@t-text, 0.08); border-radius: 7px; }
 
 /* ---------- right ---------- */

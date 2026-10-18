@@ -1,0 +1,115 @@
+{
+ "walk": {
+  "frames": [
+   "walk-0.png",
+   "walk-1.png",
+   "walk-2.png",
+   "walk-3.png"
+  ],
+  "w": 129,
+  "h": 106
+ },
+ "run": {
+  "frames": [
+   "run-0.png",
+   "run-1.png",
+   "run-2.png",
+   "run-3.png"
+  ],
+  "w": 172,
+  "h": 90
+ },
+ "sleep": {
+  "frames": [
+   "sleep-0.png",
+   "sleep-1.png"
+  ],
+  "w": 94,
+  "h": 75
+ },
+ "blink": {
+  "frames": [
+   "blink-0.png",
+   "blink-1.png",
+   "blink-2.png"
+  ],
+  "w": 82,
+  "h": 137
+ },
+ "eat": {
+  "frames": [
+   "eat-0.png",
+   "eat-1.png"
+  ],
+  "w": 99,
+  "h": 84
+ },
+ "jump": {
+  "frames": [
+   "jump-0.png",
+   "jump-1.png",
+   "jump-2.png"
+  ],
+  "w": 151,
+  "h": 114
+ },
+ "play": {
+  "frames": [
+   "play-0.png",
+   "play-1.png",
+   "play-2.png"
+  ],
+  "w": 175,
+  "h": 136
+ },
+ "purr": {
+  "frames": [
+   "purr-0.png",
+   "purr-1.png"
+  ],
+  "w": 88,
+  "h": 84
+ },
+ "bowl_full": {
+  "file": "bowl_full.png",
+  "w": 65,
+  "h": 49
+ },
+ "bowl_empty": {
+  "file": "bowl_empty.png",
+  "w": 64,
+  "h": 44
+ },
+ "ball": {
+  "file": "ball.png",
+  "w": 39,
+  "h": 39
+ },
+ "yarn": {
+  "file": "yarn.png",
+  "w": 70,
+  "h": 52
+ },
+ "treat": {
+  "file": "treat.png",
+  "w": 46,
+  "h": 30
+ },
+ "heart": {
+  "file": "heart.png",
+  "w": 34,
+  "h": 30
+ },
+ "z": {
+  "file": "z.png",
+  "w": 23,
+  "h": 26
+ },
+ "stretch": {
+  "frames": [
+   "stretch-0.png"
+  ],
+  "w": 96,
+  "h": 112
+ }
+}

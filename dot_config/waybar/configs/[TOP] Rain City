@@ -23,6 +23,20 @@
 "margin-right": 10,
 "margin-bottom": 0,
 
+// Sam the desk cat (~/.local/bin/desk-sam): click hides/shows him,
+// right click: feed / ball / yarn / treat / home, middle click: ball
+"custom/sam": {
+	"exec": "$HOME/.local/bin/desk-sam status",
+	"return-type": "json",
+	"interval": 10,
+	"signal": 14,
+	"format": "{}",
+	"on-click": "$HOME/.local/bin/desk-sam toggle",
+	"on-click-right": "$HOME/.local/bin/desk-sam menu",
+	"on-click-middle": "$HOME/.local/bin/desk-sam ball",
+	"tooltip": true,
+},
+
 // study timer (~/.local/bin/desk-pomodoro): click start/pause, middle skip,
 // right reset, scroll changes the focus length
 "custom/pomodoro": {
@@ -52,6 +66,7 @@
 	"custom/playerctl",
 	"clock",
 	"custom/pomodoro",
+	"custom/sam",
 	"custom/arcturon_server",
 	"custom/shutdown_timer",
 	],

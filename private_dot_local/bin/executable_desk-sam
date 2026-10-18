@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# desk-sam: Sam the desk cat (~/.config/desk-sam/shell.qml, a Quickshell overlay).
+#
+#   desk-sam toggle        on/off (waybar 🐈 left click); remembered across reboots
+#   desk-sam on | off      explicitly
+#   desk-sam autostart     start at login unless he was turned off
+#   desk-sam feed | ball | yarn | treat | home
+#   desk-sam menu          rofi menu with the above (waybar right click)
+#   desk-sam status        JSON for waybar
+#
+# Off means off: the process is stopped, nothing is drawn or running.
+set -uo pipefail
+
+shell="$HOME/.config/desk-sam/shell.qml"
+off="$HOME/.config/desk/sam-off"
+run="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+pidfile="$run/desk-sam.pid"
+signal=14
+
+running() { [ -f "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; }
+refresh() { pkill -RTMIN+$signal -x waybar 2>/dev/null || true; }
+
+start() {
+	running && return 0
+	setsid qs -p "$shell" >"$run/desk-sam.log" 2>&1 </dev/null &
+	echo $! >"$pidfile"
+}
+stop() {
+	running && kill "$(cat "$pidfile")" 2>/dev/null
+	rm -f "$pidfile"
+}
+ipc() { running && qs -p "$shell" ipc call sam "$1" 2>/dev/null; }
+
+case "${1:-status}" in
+on) rm -f "$off"; start; refresh ;;
+off) mkdir -p "$(dirname "$off")"; touch "$off"; stop; refresh ;;
+toggle) if running; then "$0" off; else "$0" on; fi ;;
+autostart) [ -e "$off" ] || start ;;
+feed | ball | yarn | treat | home) running || { "$0" on; sleep 1.5; }; ipc "$1" ;;
+menu)
+	pick=$(printf '🍗  Feed Sam\n🔴  Throw the ball\n🧶  Throw the yarn\n🐟  Give a treat\n🏠  Call him home\n💤  Turn Sam off\n' |
+		rofi -dmenu -i -p "Sam" -no-custom) || exit 0
+	case "$pick" in
+	*Feed*) "$0" feed ;; *ball*) "$0" ball ;; *yarn*) "$0" yarn ;; *treat*) "$0" treat ;;
+	*home*) "$0" home ;; *off*) "$0" off ;;
+	esac
+	;;
+status)
+	if running; then
+		mode=$(ipc status | tr -d '"')
+		case "$mode" in
+		focus) printf '{"text":"🐈","class":"focus","tooltip":"Sam is napping while you focus\\nclick: hide · right click: menu"}\n' ;;
+		*) printf '{"text":"🐈","class":"on","tooltip":"Sam is %s\\nclick: hide · right click: feed, ball, yarn, treat · middle: ball"}\n' "${mode:-around}" ;;
+		esac
+	else
+		printf '{"text":"🐈","class":"off","tooltip":"Sam is off\\nclick: bring him back"}\n'
+	fi
+	;;
+*) sed -n '2,12p' "$0" ;;
+esac
