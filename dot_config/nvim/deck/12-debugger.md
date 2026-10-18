@@ -90,6 +90,8 @@ Enter jumps to the declaration or frame. `[` / `]` step back and forward through
 2. `Space dd` → pick the test. It stops at the breakpoint.
 3. `Space dv` to see locals; `F10` / `F11` to walk; `Space dk` on any expression.
 4. Stuck on what you see? `Space Space` asks Claude with X-ray's view of the stack and heap attached.
+
+Threads and locks over time (not one stop): `Space ds` opens a labsync recording in Lockscope (see Concurrency).
 5. `Space dq` when done.
 
 ## lldb in the REPL

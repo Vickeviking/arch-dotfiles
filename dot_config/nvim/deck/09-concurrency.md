@@ -78,3 +78,25 @@ READY.store(true, Release);              assert_eq!(DATA.load(Relaxed), 42);   /
 | deadlock | locks taken in different orders | one global lock order, `try_lock` with backoff |
 | wasted spinning | spin loops burn CPU while the holder is descheduled | park after spinning a bit (`parking_lot` does) |
 | false sharing | two hot atomics on one cache line | `CachePadded`, `repr(align(64))` |
+
+## See it run: Lockscope
+
+Swap the imports and every lock and atomic gets recorded with its line:
+
+```rust
+use labsync::sync::{Arc, Mutex};          // instead of std::sync
+use labsync::thread;                      // spawn / spawn_named("worker 1", …)
+let _rec = labsync::record("my-run");     // → target/lab/my-run.json
+```
+
+| Keys / command | Does |
+| ---- | ---- |
+| `Space ds` | open a recording from this project in Lockscope (newest first, ✗ = a failing schedule) |
+| `lab-view target/lab/x.json` | the same from a shell |
+| `labsync::explore("name", 1000, \|\| …)` | try 1000 thread schedules (feature `shuttle`); the first that breaks is saved as `name-failure.json` |
+| `LABSYNC_SEED=… cargo run …` | replay exactly that schedule |
+| `labsync::note("inserted 5")` | a flag on the thread's lane |
+
+In Lockscope: amber boxes = waiting for a lock, colored bars = holding it, lock rows show who owns it and how long the queue is, atomic rows show every value. Click to pin the cursor, ←/→ steps, space plays.
+
+Examples (`cargo run -p labsync --example …` in genomlysning): `sum` (one shared lock vs local sums), `hand_over_hand` (lock coupling down a list), `racy_counter` and `deadlock` (`--features shuttle`).

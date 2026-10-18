@@ -39,3 +39,8 @@ end, { nargs = "*", range = true, desc = "Ask Claude about the code" })
 vim.keymap.set("n", "<leader>cr", function()
 	require("vango.run").run()
 end, { desc = "Run this file" })
+
+-- Lockscope: a labsync recording as a timeline (Space ds, "scope")
+vim.keymap.set("n", "<leader>ds", function()
+	require("vango.lab").open()
+end, { desc = "Lockscope: open a labsync recording" })
