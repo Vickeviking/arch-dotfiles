@@ -2,7 +2,7 @@
 -- without leaving the code. Runs the `claude` CLI you're already logged into,
 -- slimmed down (no tools, no MCP, no CLAUDE.md), so an answer takes ~2 s.
 --
---   Space aq   ask (in visual mode: about the selection)
+--   Space Space  ask (in visual mode: about the selection); Space aq works too
 --   Space ae   explain the diagnostic under the cursor
 --   :Ask …     ask straight from the command line
 --
@@ -520,7 +520,7 @@ local function remember_origin()
   end
 end
 
--- Space aq: open (or hide) the chat; from visual mode the selection is the context
+-- Space Space (or Space aq): open (or hide) the chat; from visual mode the selection is the context
 function M.open(opts)
   opts = opts or {}
   if M.is_open() and not opts.range and not opts.question then

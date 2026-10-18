@@ -24,8 +24,11 @@ local function ask(fn)
 		end
 	end
 end
-vim.keymap.set("n", "<leader>aq", ask("open"), { desc = "Ask Claude (chat)" })
-vim.keymap.set("x", "<leader>aq", ask("visual"), { desc = "Ask Claude about the selection" })
+-- Space Space is the easy one (two thumb taps); Space aq stays as an alias
+for _, lhs in ipairs({ "<leader><leader>", "<leader>aq" }) do
+	vim.keymap.set("n", lhs, ask("open"), { desc = "Ask Claude (chat)" })
+	vim.keymap.set("x", lhs, ask("visual"), { desc = "Ask Claude about the selection" })
+end
 vim.keymap.set("n", "<leader>ae", ask("explain"), { desc = "Ask: explain this diagnostic" })
 vim.api.nvim_create_user_command("Ask", function(a)
 	ask("setup")() -- defines the real :Ask, then forwards

@@ -89,7 +89,7 @@ Enter jumps to the declaration or frame. `[` / `]` step back and forward through
 1. Put the cursor in a test, `Space db` on an interesting line.
 2. `Space dd` → pick the test. It stops at the breakpoint.
 3. `Space dv` to see locals; `F10` / `F11` to walk; `Space dk` on any expression.
-4. Stuck on what you see? `Space aq` asks Claude with X-ray's view of the stack and heap attached.
+4. Stuck on what you see? `Space Space` asks Claude with X-ray's view of the stack and heap attached.
 5. `Space dq` when done.
 
 ## lldb in the REPL

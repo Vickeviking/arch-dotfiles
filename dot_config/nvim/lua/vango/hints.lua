@@ -4,8 +4,8 @@
 --   stepping in the debugger   F10 over · F11 into · F12 out · F5 continue · Space dx memory
 --   on a borrow error          Space Rw why not? · Space ca fixes · ]d next error
 --   on a Rust symbol           K K lens · gd definition · Space dd debug
---   on a symbol, other langs   K docs · gd definition · gr references · Space aq ask
---   anywhere else              Space cr run · Space aq ask · Space r cheat sheet
+--   on a symbol, other langs   K docs · gd definition · gr references · Space Space ask
+--   anywhere else              Space cr run · Space Space ask · Space r cheat sheet
 --
 -- `:Hints` turns it off and on (vim.g.vango_hints).
 
@@ -77,13 +77,13 @@ function M.items()
   local has_lsp = #vim.lsp.get_clients({ bufnr = buf }) > 0
   local runs = require("vango.run").RUNNERS[ft] ~= nil
   if has_lsp and on_symbol(buf) then
-    return { { "K", "docs" }, { "gd", "definition" }, { "gr", "references" }, { "Space aq", "ask" } }
+    return { { "K", "docs" }, { "gd", "definition" }, { "gr", "references" }, { "Space Space", "ask" } }
   end
   local out = {}
   if runs then
     out[#out + 1] = { "Space cr", "run" }
   end
-  out[#out + 1] = { "Space aq", "ask" }
+  out[#out + 1] = { "Space Space", "ask" }
   out[#out + 1] = { "Space r", "cheat sheet" }
   out[#out + 1] = { "Space ?", "every key" }
   return out

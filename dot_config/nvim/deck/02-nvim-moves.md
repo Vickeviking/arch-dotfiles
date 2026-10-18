@@ -131,8 +131,8 @@ Examples: `ci"` change the string, `da(` delete a call's arguments with the pare
 
 | Keys | Does |
 | ---- | ---- |
-| `Space aq` | **Ask** Claude (Haiku) in a float; the function under the cursor, its errors, and X-ray (when stopped) come along |
-| `Space aq` in visual | ask about just the selected lines |
+| `Space Space` | **Ask** Claude (Haiku) in a float; the function under the cursor, its errors, and X-ray (when stopped) come along |
+| `Space Space` in visual | ask about just the selected lines |
 | `Space ae` | explain the diagnostic under the cursor, with the smallest fix |
 | `:Ask question` | ask from the command line |
 | in Ask | `⏎` send · `⇧⏎` new line · `Tab` to the answers · `y` yank code · `C-n` new chat · `C-c` stop · `q` hide |
