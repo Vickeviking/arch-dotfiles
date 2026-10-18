@@ -12,3 +12,6 @@ README.md
 # backups made before edits (file.bak-YYYYMMDD-HHMMSS) and logs
 **/*.bak-*
 .config/nvim/**/*.log
+
+# never in git: the restic repository password
+.config/desk-backup/password

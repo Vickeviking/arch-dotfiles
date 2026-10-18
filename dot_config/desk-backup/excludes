@@ -1,0 +1,16 @@
+# desk-backup: never back these up (build output, caches, big downloads)
+**/target
+**/node_modules
+**/.venv
+**/venv
+**/__pycache__
+**/.cache
+**/dist
+**/build
+**/.next
+**/.turbo
+**/*.o
+**/*.rlib
+**/.gradle
+**/cargo-target
+**/worktrees

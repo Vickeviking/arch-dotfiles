@@ -1,0 +1,9 @@
+[Unit]
+Description=Nightly restic backup to the other machine (desk-backup)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/desk-backup
+Nice=10
+IOSchedulingClass=idle

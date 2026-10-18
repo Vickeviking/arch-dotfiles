@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# desk-sync: copy the desktop's big binary assets to the other machine.
+# chezmoi carries config and scripts; this carries what stays out of git:
+# wallpapers, desk art, GTK themes, icon and cursor themes.
+#
+#   desk-sync              to the other machine (desktop ⇄ ThinkPad, picked by hostname)
+#   desk-sync <host>       to that host
+#   desk-sync -n [host]    dry run: list what would be copied
+#
+# Copies only files that are new or newer on this side and never deletes
+# anything on the other side. Generated assets (the Desk icon theme, the
+# sound files) are skipped: run `desk-theme <name>` and
+# `~/.local/share/sounds/desk/make-sounds.py` there instead.
+# From the ThinkPad it needs sshd on the desktop, which is off today, so run
+# it from the desktop.
+set -euo pipefail
+
+dry=()
+if [ "${1:-}" = "-n" ]; then
+	dry=(--dry-run --itemize-changes)
+	shift
+fi
+case "$(hostname)" in
+legion-arch) other=vango@vango-arch-thinkpad ;;
+*) other=vango@legion-arch ;;
+esac
+host=${1:-$other}
+
+paths=(
+	Pictures/wallpapers
+	Pictures/desk-art
+	.themes
+	.icons
+	.local/share/themes
+)
+
+if ! ssh -o ConnectTimeout=6 -o BatchMode=yes "$host" true 2>/dev/null; then
+	echo "desk-sync: $host doesn't answer (asleep or offline?)" >&2
+	exit 1
+fi
+
+cd "$HOME"
+for p in "${paths[@]}"; do
+	[ -e "$p" ] || continue
+	echo "→ $p"
+	rsync -a --update --mkpath "${dry[@]}" --exclude '*.bak-*' "$p/" "$host:$p/"
+done
+echo "desk-sync: done${dry:+ (dry run)}"
