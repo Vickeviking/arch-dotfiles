@@ -32,6 +32,31 @@ ShellRoot {
     property var arrive: null          // called when a walk ends
     property int hits: 0               // ball/yarn hits this game
     property string toy: ""            // "ball" | "yarn" | "" while a toy is out
+    property real spotX: -1            // where you dropped him last (-1: upper right)
+    property real spotY: -1
+    property bool dragged: false
+
+    FileView {
+        id: spotFile
+        path: root.home + "/.local/state/desk-sam.json"
+        onLoaded: { try { const o = JSON.parse(text()); root.spotX = o.x; root.spotY = o.y } catch (e) {} }
+    }
+    // colors from desk-theme (~/.config/themes/current/nvim.lua), so the menu matches the desk
+    property var pal: ({ surface: "#0F1216", panel: "#171B21", border: "#2A3038", text: "#E6DCCB", muted: "#8E949B", accent: "#F0913C" })
+    FileView {
+        path: root.home + "/.config/themes/current/nvim.lua"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            const p = Object.assign({}, root.pal)
+            for (const k of ["surface", "panel", "border", "text", "muted", "accent"]) {
+                const m = text().match(new RegExp("\\b" + k + "\\s*=\\s*\"(#[0-9A-Fa-f]{6})\""))
+                if (m) p[k] = m[1]
+            }
+            root.pal = p
+        }
+    }
+    function saveSpot() { spotFile.setText(JSON.stringify({ x: Math.round(spotX), y: Math.round(spotY) }) + "\n") }
 
     FileView {
         path: Qt.resolvedUrl("frames/manifest.json").toString().replace("file://", "")
@@ -92,6 +117,7 @@ ShellRoot {
         function treat(): string { return root.treat() }
         function home(): string { root.goHome(false); return "going home" }
         function status(): string { return root.focusing ? "focus" : root.mode }
+        function menu(): string { menuBox.openOver(); return "menu" }
     }
 
     function frameFile(anim, i) {
@@ -111,9 +137,8 @@ ShellRoot {
     PanelWindow {
         id: win
         screen: Quickshell.screens.find(s => s.name === "eDP-2") || Quickshell.screens[0]
-        anchors { top: true; left: true; right: true }
+        anchors { top: true; left: true; right: true; bottom: true }   // whole screen; input only on Sam and his things
         margins.top: 44
-        implicitHeight: 124
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
@@ -121,16 +146,19 @@ ShellRoot {
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
         readonly property real dpr: screen ? screen.devicePixelRatio : 1
-        readonly property real floorY: height - 6
-        readonly property real homeX: width - 190
+        // his spot: upper right by default, or wherever you last dropped him
+        readonly property real floorY: root.spotY > 0 ? Math.min(root.spotY, height - 10) : 118
+        readonly property real homeX: root.spotX >= 0 ? Math.min(root.spotX, width - 120) : width - 190
         // his part of the screen: the upper right
-        readonly property real roamFrom: width * 0.55
+        readonly property real roamFrom: Math.max(4, homeX - width * 0.3)
+        readonly property real roamTo: Math.min(width - 120, homeX + width * 0.15)
 
         mask: Region {
             item: cat
             Region { item: toyItem }
             Region { item: bowl }
             Region { item: treatItem }
+            Region { item: menuBox.visible ? menuBox : null }
         }
 
         // ---- Sam ---------------------------------------------------------
@@ -155,9 +183,19 @@ ShellRoot {
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.purr()
-                onEntered: root.pounce()
+                cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                drag.target: pressedButtons & Qt.LeftButton ? cat : null
+                drag.threshold: 6
+                drag.minimumX: 0; drag.maximumX: win.width - cat.width
+                drag.minimumY: 0; drag.maximumY: win.height - cat.height
+                onPressed: root.dragged = false
+                drag.onActiveChanged: drag.active ? root.pickUp() : root.drop()
+                onClicked: mouse => {
+                    if (mouse.button === Qt.RightButton) menuBox.openOver()
+                    else if (!root.dragged) root.purr()
+                }
+                onEntered: if (!pressed) root.pounce()
             }
         }
 
@@ -166,6 +204,7 @@ ShellRoot {
             running: true; repeat: true
             interval: ({ walk: 130, run: 75, sleep: 1400, blink: 2500, eat: 280, jump: 110, play: 140, purr: 700, stretch: 1000 })[cat.anim] || 200
             onTriggered: {
+                if (root.mode === "carried") return
                 const n = root.frames(cat.anim)
                 if (cat.anim === "jump" || cat.anim === "play" || cat.anim === "stretch") {
                     if (cat.frame < n - 1) cat.frame++
@@ -245,6 +284,96 @@ ShellRoot {
             NumberAnimation on y { id: treatFall; running: false; from: -30; to: win.floorY - treatItem.height; duration: 700; easing.type: Easing.OutBounce }
         }
 
+        // ---- his menu: right click Sam (or the waybar paw) ------------------
+        Rectangle {
+            id: menuBox
+            visible: false
+            opacity: visible ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 120 } }
+            width: 260
+            height: menuCol.implicitHeight + 14
+            radius: 12
+            color: root.pal.panel
+            border.color: Qt.tint(root.pal.border, Qt.rgba(1, 1, 1, 0.06))
+            border.width: 1
+            z: 50
+            function openOver() {
+                x = Math.max(8, Math.min(win.width - width - 8, cat.x + cat.width / 2 - width / 2))
+                y = cat.y - height - 10 > 4 ? cat.y - height - 10 : cat.y + cat.height + 10
+                visible = true
+            }
+            HoverHandler { id: menuHover }
+            Timer {        // no keyboard focus here, so it closes once the mouse has left it a moment
+                interval: 2200; running: menuBox.visible && !menuHover.hovered
+                onTriggered: menuBox.visible = false
+            }
+            Column {
+                id: menuCol
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 7 }
+                spacing: 2
+                Text {
+                    text: root.focusing ? "Sam · napping · games after your break" : "Sam"
+                    color: root.pal.muted
+                    font { family: "FantasqueSansM Nerd Font"; pixelSize: 13 }
+                    leftPadding: 8; topPadding: 2; bottomPadding: 4
+                }
+                Repeater {
+                    model: [
+                        { icon: "🍗", label: "Feed him", act: "feed", play: true },
+                        { icon: "🔴", label: "Throw the ball", act: "ball", play: true },
+                        { icon: "🧶", label: "Throw the yarn", act: "yarn", play: true },
+                        { icon: "🐟", label: "Give a treat", act: "treat", play: true },
+                        { icon: "🏠", label: "Back to his spot", act: "home", play: false },
+                        { icon: "💤", label: "Hide Sam", act: "off", play: false }
+                    ]
+                    delegate: Rectangle {
+                        required property var modelData
+                        readonly property bool enabled_: !(modelData.play && root.focusing)
+                        width: menuCol.width; height: 32; radius: 8
+                        color: itemArea.containsMouse && enabled_ ? Qt.tint(root.pal.panel, Qt.rgba(1, 0.57, 0.24, 0.16)) : "transparent"
+                        Row {
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: 10; spacing: 10
+                            Text { text: modelData.icon; font.pixelSize: 15; opacity: enabled_ ? 1 : 0.4 }
+                            Text {
+                                text: modelData.label
+                                color: enabled_ ? (itemArea.containsMouse ? root.pal.accent : root.pal.text) : root.pal.muted
+                                font { family: "FantasqueSansM Nerd Font"; pixelSize: 14 }
+                            }
+                        }
+                        MouseArea {
+                            id: itemArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: enabled_ ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: { if (!enabled_) return; menuBox.visible = false; root.act(modelData.act) }
+                        }
+                    }
+                }
+            }
+        }
+
+        // a speech bubble over him, for a couple of seconds
+        Rectangle {
+            id: bubble
+            visible: false
+            z: 40
+            radius: 9
+            color: root.pal.panel
+            border.color: root.pal.border
+            width: bubbleText.implicitWidth + 22; height: bubbleText.implicitHeight + 12
+            x: Math.max(6, Math.min(win.width - width - 6, cat.x + cat.width / 2 - width / 2))
+            y: cat.y - height - 6
+            function say(t) { bubbleText.text = t; visible = true; bubbleTimer.restart() }
+            Text {
+                id: bubbleText
+                anchors.centerIn: parent
+                color: root.pal.text
+                font { family: "FantasqueSansM Nerd Font"; pixelSize: 14 }
+            }
+            Timer { id: bubbleTimer; interval: 2600; onTriggered: bubble.visible = false }
+        }
+
         // ---- little effects: z's while asleep, hearts while purring -------
         Component {
             id: floater
@@ -277,7 +406,7 @@ ShellRoot {
                 interval = root.rand(25000, 70000)
                 if (root.mode !== "idle" || root.focusing || root.userIdle) return
                 const r = Math.random()
-                if (r < 0.7) root.walkTo(root.rand(win.roamFrom, win.width - cat.width - 20), false, () => root.sit())
+                if (r < 0.7) root.walkTo(root.rand(win.roamFrom, win.roamTo), false, () => root.sit())
                 else if (r < 0.85) { root.mode = "pouncing"; root.setAnim("play"); later.go(900, () => root.sit()) }
             }
         }
@@ -291,6 +420,26 @@ ShellRoot {
 
     // ---- behaviours ---------------------------------------------------------
     function setAnim(a) { if (cat.anim !== a) { cat.anim = a; cat.frame = 0 } }
+
+    // picked up with the mouse: dangle mid-air; dropped: that's his new spot
+    function pickUp() {
+        dragged = true
+        walkAnim.stop()
+        arrive = null
+        later.stop()
+        mode = "carried"
+        setAnim("jump")
+        cat.frame = 1
+    }
+    function drop() {
+        spotX = cat.x
+        spotY = cat.y + cat.height
+        saveSpot()
+        cat.y = Qt.binding(() => win.floorY - cat.height)
+        mode = "pouncing"
+        cat.frame = 2
+        later.go(450, () => { if (focusing || userIdle) sleep(); else sit() })
+    }
     function sit() { mode = "idle"; setAnim("blink") }
 
     function walkTo(x, run, then) {
@@ -337,8 +486,17 @@ ShellRoot {
         later.go(1800, () => purr())
     }
 
+    Process { id: offProc; command: [root.home + "/.local/bin/desk-sam", "off"] }
+    function act(a) {
+        if (a === "feed") feed()
+        else if (a === "ball" || a === "yarn") throwToy(a)
+        else if (a === "treat") treat()
+        else if (a === "home") goHome(focusing)
+        else if (a === "off") offProc.running = true
+    }
+
     function refuse() {
-        notify("Napping until your break 😴")
+        bubble.say("zZ… after your break")
         return "focus: Sam is napping until your break"
     }
     function throwToy(kind) {
