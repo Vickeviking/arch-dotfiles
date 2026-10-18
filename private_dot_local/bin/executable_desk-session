@@ -193,6 +193,8 @@ def show():
 
 def main(argv):
     cmd = argv[0] if argv else "show"
+    if cmd in ("save", "restore") and not ENV.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        return print("desk-session: Hyprland isn't running (login screen?), nothing to do")
     if cmd == "save":
         save()
     elif cmd == "restore":
