@@ -72,6 +72,11 @@ window#waybar.empty #window { padding: 0; margin: 0; }
 #custom-spektra { color: @t-accent2; }
 #custom-arcturon_server { color: @t-accent; }
 #custom-shutdown_timer { color: @t-muted; }
+#custom-pomodoro { color: @t-muted; padding: 0 6px; }
+#custom-pomodoro.focus { color: @t-accent; }
+#custom-pomodoro.break { color: @t-ok; }
+#custom-pomodoro.paused { color: @t-muted; }
+#custom-pomodoro:hover { background: alpha(@t-text, 0.08); border-radius: 7px; }
 
 /* ---------- right ---------- */
 #privacy { padding: 0 4px; }

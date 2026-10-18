@@ -53,4 +53,8 @@ save("dialog-error", mixdown(bell(A3 * 2, .16, .3), bell(A3 * 2, .2, .3, .14)))
 save("power-plug", mixdown(bell(C5, .14), bell(E5, .14, .3, .06), bell(G5, .24, .3, .12)))
 save("power-unplug", mixdown(bell(G5, .14), bell(E5, .14, .3, .06), bell(C5, .24, .3, .12)))
 save("bell", bell(A5, .3))
+# pomodoro: a bright rising pling when focus ends, a softer two-note one when the break ends
+G6 = 1568.0
+save("pomodoro-done", mixdown(bell(C6, .5, .3), bell(E6, .5, .28, .11), bell(G6, .9, .26, .22)))
+save("break-done", mixdown(bell(G5, .35, .3), bell(C6, .6, .3, .14)))
 print("desk sounds →", OUT)

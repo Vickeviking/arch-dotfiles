@@ -23,6 +23,22 @@
 "margin-right": 10,
 "margin-bottom": 0,
 
+// study timer (~/.local/bin/desk-pomodoro): click start/pause, middle skip,
+// right reset, scroll changes the focus length
+"custom/pomodoro": {
+	"exec": "$HOME/.local/bin/desk-pomodoro",
+	"return-type": "json",
+	"interval": 1,
+	"signal": 13,
+	"format": "{}",
+	"on-click": "$HOME/.local/bin/desk-pomodoro toggle",
+	"on-click-middle": "$HOME/.local/bin/desk-pomodoro skip",
+	"on-click-right": "$HOME/.local/bin/desk-pomodoro reset",
+	"on-scroll-up": "$HOME/.local/bin/desk-pomodoro longer",
+	"on-scroll-down": "$HOME/.local/bin/desk-pomodoro shorter",
+	"tooltip": true,
+},
+
 "modules-left": [
 	"group/app_drawer",
 	"hyprland/workspaces#rw",
@@ -35,6 +51,7 @@
 	"custom/player_next",
 	"custom/playerctl",
 	"clock",
+	"custom/pomodoro",
 	"custom/arcturon_server",
 	"custom/shutdown_timer",
 	],
