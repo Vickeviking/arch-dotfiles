@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""desk-session: windows come back after a reboot, like on a Mac.
+
+  desk-session save      remember every window (a timer runs this every 2 min)
+  desk-session restore   bring them back (Hyprland runs this at login; skips if windows are
+                         already open, --force to restore anyway)
+  desk-session show      list what would come back
+  desk-session off|on    stop / resume restoring at login
+
+What comes back: each app on its workspace (and monitor), floating windows at
+their size and position, and every kitty in the folder its shell was in.
+Nothing that was running is started again: a terminal opens a fresh shell, an
+app starts fresh (Chrome reopens its own tabs if it's set to). Snapshot in
+~/.local/state/desk-session.json.
+"""
+import glob, json, os, shlex, subprocess, sys, time
+
+HOME = os.path.expanduser("~")
+STATE = os.environ.get("DESK_SESSION_STATE") or os.path.join(HOME, ".local/state/desk-session.json")
+OFF = os.path.join(HOME, ".config/desk/session-off")
+SHELLS = {"zsh", "bash", "fish", "sh"}
+SKIP = {"quickask", "dev.vango.xray"}           # transient windows
+
+
+def hypr_env():
+    """Find the running Hyprland when started from a systemd timer."""
+    env = dict(os.environ)
+    run = env.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    env["XDG_RUNTIME_DIR"] = run
+    if not env.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        socks = sorted(glob.glob(os.path.join(run, "hypr", "*", ".socket.sock")), key=os.path.getmtime)
+        if socks:
+            env["HYPRLAND_INSTANCE_SIGNATURE"] = os.path.basename(os.path.dirname(socks[-1]))
+    env.setdefault("WAYLAND_DISPLAY", "wayland-1")
+    return env
+
+
+ENV = hypr_env()
+
+
+def hyprctl(*args, js=True):
+    out = subprocess.run(["hyprctl", *(["-j"] if js else []), *args], capture_output=True, text=True, env=ENV, timeout=10)
+    return json.loads(out.stdout) if js else out.stdout.strip()
+
+
+def shell_cwd(pid):
+    """The folder of the shell running inside a terminal (its first shell child)."""
+    for path in glob.glob(f"/proc/{pid}/task/*/children"):
+        try:
+            kids = open(path).read().split()
+        except OSError:
+            continue
+        for kid in kids:
+            try:
+                if open(f"/proc/{kid}/comm").read().strip() in SHELLS:
+                    return os.readlink(f"/proc/{kid}/cwd")
+            except OSError:
+                pass
+    return None
+
+
+def desktop_exec(cls):
+    """How to start an app, from its .desktop file (matched on StartupWMClass or name)."""
+    dirs = [os.path.join(HOME, ".local/share/applications"), "/usr/share/applications"]
+    want = cls.lower()
+    best = None
+    for d in dirs:
+        for f in glob.glob(os.path.join(d, "*.desktop")):
+            try:
+                text = open(f, errors="replace").read()
+            except OSError:
+                continue
+            fields = dict(l.split("=", 1) for l in text.split("[Desktop Action")[0].splitlines() if "=" in l)
+            ex = fields.get("Exec")
+            if not ex:
+                continue
+            wm = fields.get("StartupWMClass", "").lower()
+            base = os.path.basename(f)[:-8].lower()
+            if wm == want or base == want:
+                return " ".join(p for p in shlex.split(ex) if "%" not in p)
+            if best is None and want in base:
+                best = " ".join(p for p in shlex.split(ex) if "%" not in p)
+    return best
+
+
+def save():
+    clients = [c for c in hyprctl("clients") if c.get("mapped") and not str(c["workspace"]["name"]).startswith("special")
+               and c["class"] not in SKIP and c["class"]]
+    if not clients:
+        return print("desk-session: no windows, keeping the last snapshot")
+    mons = {m["name"]: m for m in hyprctl("monitors")}
+    wins = []
+    for c in clients:
+        m = mons.get(next((n for n, mm in mons.items() if mm["id"] == c["monitor"]), ""), None)
+        w = {"class": c["class"], "workspace": c["workspace"]["id"], "floating": c["floating"],
+             "fullscreen": c.get("fullscreen", 0), "size": c["size"], "pid": c["pid"],
+             "at": [c["at"][0] - (m["x"] if m else 0), c["at"][1] - (m["y"] if m else 0)]}
+        if c["class"] == "kitty":
+            w["cwd"] = shell_cwd(c["pid"]) or HOME
+        else:
+            w["exec"] = desktop_exec(c["class"]) or desktop_exec(c.get("initialClass", "")) or \
+                (open(f"/proc/{c['pid']}/cmdline").read().split("\0")[0] if os.path.exists(f"/proc/{c['pid']}/cmdline") else None)
+        wins.append(w)
+    snap = {"saved": time.strftime("%Y-%m-%d %H:%M:%S"), "windows": wins}
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    tmp = STATE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(snap, f, indent=1)
+    os.replace(tmp, STATE)
+
+
+def to_lua(v):
+    """A Python value as a Lua literal (dict keys are plain identifiers)."""
+    if isinstance(v, dict):
+        return "{ " + ", ".join(f"{k} = {to_lua(x)}" for k, x in v.items()) + " }"
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return str(v)
+    return json.dumps(str(v))
+
+
+def launch(cmd):
+    subprocess.Popen(cmd, shell=isinstance(cmd, str), env=ENV, stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL, start_new_session=True)
+
+
+def restore():
+    if os.path.exists(OFF):
+        return print("desk-session: off (desk-session on to resume)")
+    try:
+        snap = json.load(open(STATE))
+    except (OSError, ValueError):
+        return print("desk-session: nothing saved yet")
+    for _ in range(40):                      # wait for Hyprland to answer
+        try:
+            hyprctl("monitors")
+            break
+        except Exception:
+            time.sleep(0.5)
+    time.sleep(2)
+    present = [c for c in hyprctl("clients") if c.get("mapped") and c["class"] not in SKIP
+               and not str(c["workspace"]["name"]).startswith("special")]
+    if present and "--force" not in sys.argv:
+        return print(f"desk-session: {len(present)} windows already open, not restoring (--force to do it anyway)")
+    running = {c["class"] for c in present}
+
+    # terminals: a one-off rule per window, matched on a unique start title
+    for i, w in enumerate(x for x in snap["windows"] if x["class"] == "kitty"):
+        title = f"desk-restore-{os.getpid()}-{i}"
+        rule = {"name": title, "match": {"initial_title": f"^{title}$"}, "workspace": f"{w['workspace']} silent"}
+        if w["floating"]:
+            rule.update(float=True, size=f"{w['size'][0]} {w['size'][1]}", move=f"{w['at'][0]} {w['at'][1]}")
+        hyprctl("eval", "hl.window_rule(" + to_lua(rule) + ")", js=False)
+        cwd = w.get("cwd") if w.get("cwd") and os.path.isdir(w["cwd"]) else HOME
+        launch(["kitty", "--title", title, "--directory", cwd])
+        time.sleep(0.15)
+
+    # apps: start each once (one process may own several windows, like Chrome),
+    # then move the windows that appear onto their saved workspaces
+    groups = {}
+    for w in snap["windows"]:
+        if w["class"] != "kitty" and w.get("exec"):
+            groups.setdefault((w["class"], w["pid"]), []).append(w)
+    for (cls, _), ws in groups.items():
+        if cls in running:
+            continue
+        before = {c["address"] for c in hyprctl("clients")}
+        launch(ws[0]["exec"])
+        placed, deadline = 0, time.time() + 25
+        while placed < len(ws) and time.time() < deadline:
+            time.sleep(0.5)
+            new = [c for c in hyprctl("clients") if c["class"] == cls and c["address"] not in before]
+            for c in new[placed:]:
+                hyprctl("dispatch", f'hl.dsp.window.move({{ workspace = {ws[placed]["workspace"]}, follow = false, '
+                        f'window = "address:{c["address"]}" }})', js=False)
+                placed += 1
+                if placed >= len(ws):
+                    break
+        running.add(cls)
+
+
+def show():
+    try:
+        snap = json.load(open(STATE))
+    except (OSError, ValueError):
+        return print("nothing saved yet")
+    print(f"saved {snap['saved']}{'  (restore is OFF)' if os.path.exists(OFF) else ''}")
+    for w in sorted(snap["windows"], key=lambda w: w["workspace"]):
+        what = w.get("cwd") or w.get("exec") or "?"
+        print(f"  ws {w['workspace']:>2}  {w['class']:<16} {'floating ' if w['floating'] else ''}{what}")
+
+
+def main(argv):
+    cmd = argv[0] if argv else "show"
+    if cmd == "save":
+        save()
+    elif cmd == "restore":
+        restore()
+    elif cmd == "show":
+        show()
+    elif cmd == "off":
+        os.makedirs(os.path.dirname(OFF), exist_ok=True)
+        open(OFF, "w").close()
+        print("desk-session: restore at login is off")
+    elif cmd == "on":
+        if os.path.exists(OFF):
+            os.remove(OFF)
+        print("desk-session: restore at login is on")
+    else:
+        print(__doc__.strip())
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

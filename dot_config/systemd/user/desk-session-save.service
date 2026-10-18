@@ -1,0 +1,6 @@
+[Unit]
+Description=Remember open windows for restore at login (desk-session)
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/desk-session save
