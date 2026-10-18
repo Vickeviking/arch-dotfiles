@@ -11,10 +11,12 @@ local dir = vim.fn.stdpath("config") .. "/deck/"
 -- order is the rail order; digits 1–9, 0 jump straight to the first ten
 local KEYS = { name = "Keys", gen = true }
 local MOVES = { name = "nvim moves", file = "02-nvim-moves.md" }
+local DESK = { name = "Desk", file = "14-desk.md" }   -- outside nvim: pomodoro, Sam, Quick ask, restore…
 
 local RUST = {
   KEYS,
   MOVES,
+  DESK,
   { name = "Ownership", file = "03-ownership.md" },
   { name = "Types & layout", file = "04-types-layout.md" },
   { name = "Traits & generics", file = "05-traits.md" },
@@ -33,7 +35,7 @@ local PROFILES = {
   c = {
     label = "C / C++",
     tabs = {
-      KEYS, MOVES,
+      KEYS, MOVES, DESK,
       { name = "C essentials", file = "c/01-c.md" },
       { name = "Pointers & memory", file = "c/02-memory.md" },
       { name = "Modern C++", file = "c/03-cpp.md" },
@@ -43,7 +45,7 @@ local PROFILES = {
   python = {
     label = "Python",
     tabs = {
-      KEYS, MOVES,
+      KEYS, MOVES, DESK,
       { name = "Python", file = "python/01-python.md" },
       { name = "Python tooling", file = "python/02-tooling.md" },
     },
@@ -51,15 +53,15 @@ local PROFILES = {
   web = {
     label = "TypeScript",
     tabs = {
-      KEYS, MOVES,
+      KEYS, MOVES, DESK,
       { name = "TypeScript", file = "web/01-typescript.md" },
       { name = "React & tooling", file = "web/02-react-tooling.md" },
     },
   },
-  go = { label = "Go", tabs = { KEYS, MOVES, { name = "Go", file = "go/01-go.md" } } },
-  java = { label = "Java", tabs = { KEYS, MOVES, { name = "Java", file = "java/01-java.md" } } },
-  sql = { label = "SQL", tabs = { KEYS, MOVES, { name = "SQL", file = "sql/01-sql.md" } } },
-  lua = { label = "Lua", tabs = { KEYS, MOVES, { name = "Lua & nvim config", file = "lua/01-lua.md" } } },
+  go = { label = "Go", tabs = { KEYS, MOVES, DESK, { name = "Go", file = "go/01-go.md" } } },
+  java = { label = "Java", tabs = { KEYS, MOVES, DESK, { name = "Java", file = "java/01-java.md" } } },
+  sql = { label = "SQL", tabs = { KEYS, MOVES, DESK, { name = "SQL", file = "sql/01-sql.md" } } },
+  lua = { label = "Lua", tabs = { KEYS, MOVES, DESK, { name = "Lua & nvim config", file = "lua/01-lua.md" } } },
 }
 
 local FILETYPES = {
