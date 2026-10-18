@@ -464,7 +464,9 @@ local function box_rows(g, b, labels, w)
     local segs = strip(b, w)
     line(segs)
     local n, cap = b.len or 0, b.cap
-    line({ { "len " .. n, "XrayDim" }, { cap and (" · cap " .. cap) or "", (cap and cap == n) and "XrayWarn" or "XrayDim" }, { (cap and cap == n) and "  full: the next push reallocates" or "", "XrayFaint" } })
+    -- a C malloc block has no push: its "cap" is just what fits
+    local full = cap and cap == n and g.lang ~= "c"
+    line({ { "len " .. n, "XrayDim" }, { cap and (" · cap " .. cap) or "", full and "XrayWarn" or "XrayDim" }, { full and "  full: the next push reallocates" or "", "XrayFaint" } })
     -- elements that own or point elsewhere: [0] ─▶ C
     local links = {}
     for _, e in ipairs(outs) do
@@ -958,10 +960,16 @@ function M.render_compact(g, opts)
   return lines, hls, by_row, labels
 end
 
+-- the arrows each language has
+local LEGEND = {
+  c = { "pointer" },
+  cpp = { "owns", "shared", "weak", "pointer", "ref" },
+}
+
 -- the legend line, the same glyphs and colors as everywhere
-function M.legend()
+function M.legend(lang)
   local segs = {}
-  for _, k in ipairs({ "owns", "shared", "weak", "borrow", "borrow_mut" }) do
+  for _, k in ipairs(LEGEND[lang] or { "owns", "shared", "weak", "borrow", "borrow_mut" }) do
     segs[#segs + 1] = { theme.ARROW[k] .. " " .. theme.WORD[k], theme.KIND_HL[k] }
     segs[#segs + 1] = { "   ", nil }
   end

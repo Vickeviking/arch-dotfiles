@@ -62,6 +62,8 @@ return {
 				ensure_installed = {
 					"cpplint",
 					"clang-format",
+					"codelldb", -- the debugger for Rust, C and C++ (behind xray-dap)
+					"debugpy", -- the Python debugger (nvim-dap-python)
 					-- rustfmt: not a mason package; provided by rustup/system (/usr/bin/rustfmt)
 					"protolint",
 					"ruff",

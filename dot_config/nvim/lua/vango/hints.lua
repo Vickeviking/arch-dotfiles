@@ -83,6 +83,9 @@ function M.items()
   if runs then
     out[#out + 1] = { "Space cr", "run" }
   end
+  if ft == "c" or ft == "cpp" or ft == "python" then
+    out[#out + 1] = { "Space dd", "debug" }
+  end
   out[#out + 1] = { "Space Space", "ask" }
   out[#out + 1] = { "Space r", "cheat sheet" }
   out[#out + 1] = { "Space ?", "every key" }

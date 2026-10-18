@@ -1,6 +1,7 @@
 -- Where locals live in the source: the line each one is declared on (let,
--- for, if let, parameters), found with treesitter in the function around the
--- stop line. Inline X-ray text goes on those lines.
+-- for, if let, parameters; in C and C++ declarations, parameters and
+-- range-for), found with treesitter in the function around the stop line.
+-- Inline X-ray text goes on those lines.
 
 local M = {}
 
@@ -57,9 +58,99 @@ local function enclosing(buf, line)
   return node
 end
 
+-- C and C++: declarations, parameters, range-for and structured bindings.
+local c_queries = {}
+
+local function get_c_query(lang)
+  if c_queries[lang] == nil then
+    local src = [[
+      (declaration declarator: (_) @decl)
+      (parameter_declaration declarator: (_) @decl)
+    ]]
+    if lang == "cpp" then
+      src = src .. [[
+        (for_range_loop declarator: (_) @decl)
+        (optional_parameter_declaration declarator: (_) @decl)
+      ]]
+    end
+    local ok, q = pcall(vim.treesitter.query.parse, lang, src)
+    c_queries[lang] = ok and q or false
+  end
+  return c_queries[lang] or nil
+end
+
+-- names a C declarator binds: `*p`, `a[4]`, `x = 1`, `&r`, `[a, b]`
+local C_SKIP = { value = true, size = true, parameters = true, type = true, default_value = true, arguments = true }
+
+local function c_names(node, buf, out)
+  local t = node:type()
+  if t == "identifier" then
+    out[#out + 1] = vim.treesitter.get_node_text(node, buf)
+    return out
+  end
+  if t == "function_declarator" then
+    return out -- a prototype, not a local
+  end
+  for child, field in node:iter_children() do
+    if child:named() and not C_SKIP[field] then
+      c_names(child, buf, out)
+    end
+  end
+  return out
+end
+
+local C_FN = { function_definition = true, lambda_expression = true }
+
+local function decls_c(buf, line, lang)
+  local out = {}
+  local ok, parser = pcall(vim.treesitter.get_parser, buf, lang)
+  local q = get_c_query(lang)
+  if not ok or not parser or not q then
+    return out
+  end
+  local root = parser:parse()[1]:root()
+  local text = vim.api.nvim_buf_get_lines(buf, line - 1, line, false)[1] or ""
+  local col = #(text:match("^%s*") or "")
+  local fn = root:named_descendant_for_range(line - 1, col, line - 1, col)
+  while fn and not C_FN[fn:type()] do
+    fn = fn:parent()
+  end
+  -- a lambda first, then what it captures from the functions around it
+  local limit = line - 1
+  while fn do
+    local found = {}
+    for _, node in q:iter_captures(fn, buf, fn:start(), limit + 1) do
+      local row = node:start()
+      if row < limit then
+        for _, n in ipairs(c_names(node, buf, {})) do
+          found[n] = row
+        end
+      end
+    end
+    for n, row in pairs(found) do
+      if out[n] == nil then
+        out[n] = row
+      end
+    end
+    if fn:type() ~= "lambda_expression" then
+      break
+    end
+    limit = fn:start()
+    fn = fn:parent()
+    while fn and not C_FN[fn:type()] do
+      fn = fn:parent()
+    end
+  end
+  return out
+end
+
 -- name → 0-based row of its latest declaration before the stop line.
 -- Declarations on the stop line itself haven't run yet: left out.
 function M.decls(buf, line)
+  local ft = vim.bo[buf].filetype
+  if ft == "c" or ft == "cpp" then
+    return decls_c(buf, line, ft)
+  end
   local out = {}
   local fn = enclosing(buf, line)
   local q = get_query()

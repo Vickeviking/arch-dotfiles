@@ -1,10 +1,119 @@
 -- Debugging: nvim-dap + nvim-dap-view (panel, hover, inline values), codelldb from mason.
 -- rustaceanvim finds codelldb itself (through xray-dap); Space dd picks a Rust target to debug.
+-- C and C++ go through xray-dap too (adapter "xray-codelldb"); Space dd builds this
+-- file or picks a binary. Python uses debugpy (nvim-dap-python). Same keys everywhere.
 -- X-ray (lua/vango/xray) shows memory at every stop: inline notes and Space dx.
 -- Keys are listed in the deck (Space r → Debugger) and under Space d in which-key.
 
 local function dap()
 	return require("dap")
+end
+
+-- C and C++: codelldb behind xray-dap, as for Rust. Its own adapter name:
+-- rustaceanvim uses dap.adapters.codelldb whenever one exists, and Rust's
+-- adapter stays rustaceanvim's own.
+local function c_adapter(callback)
+	local ext = vim.fn.stdpath("data") .. "/mason/packages/codelldb/extension"
+	local codelldb, liblldb = ext .. "/adapter/codelldb", ext .. "/lldb/lib/liblldb.so"
+	local xray = vim.fn.exepath("xray-dap")
+	callback({
+		type = "server",
+		port = "${port}",
+		host = "127.0.0.1",
+		executable = {
+			command = xray ~= "" and xray or codelldb,
+			args = xray ~= "" and { "--codelldb", codelldb, "--liblldb", liblldb, "--port", "${port}" }
+				or { "--liblldb", liblldb, "--port", "${port}" },
+		},
+	})
+end
+
+-- Build the current file with debug info (-g -O0) into nvim's cache. Errors
+-- go to the quickfix list.
+local function build_this_file()
+	local file = vim.api.nvim_buf_get_name(0)
+	if vim.bo.modified then
+		vim.cmd.write()
+	end
+	local cpp = vim.bo.filetype == "cpp"
+	local out = vim.fn.stdpath("cache") .. "/debug-" .. vim.fn.fnamemodify(file, ":t:r")
+	local cmd = cpp and { "g++", "-std=c++20" } or { "gcc", "-std=c17" }
+	vim.list_extend(cmd, { "-g", "-O0", "-Wall", "-Wextra", file, "-o", out })
+	local res = vim.system(cmd, { text = true, cwd = vim.fn.fnamemodify(file, ":h") }):wait()
+	if res.code ~= 0 then
+		vim.fn.setqflist({}, " ", { title = "Build for debugging", lines = vim.split(res.stderr, "\n", { trimempty = true }) })
+		vim.notify("Build failed: the errors are in the quickfix list (:copen)", vim.log.levels.ERROR)
+		return dap().ABORT
+	end
+	return out
+end
+
+-- ELF executables under the working directory (build/, bin/, …), newest first.
+local function find_binaries()
+	local found = {}
+	local skip = { [".git"] = true, node_modules = true, CMakeFiles = true, [".cache"] = true }
+	local function walk(dir, depth)
+		if depth > 4 or #found > 200 then
+			return
+		end
+		for name, kind in vim.fs.dir(dir) do
+			local path = dir .. "/" .. name
+			if kind == "directory" and not skip[name] then
+				walk(path, depth + 1)
+			elseif kind == "file" and vim.fn.executable(path) == 1 and not name:match("%.so[%.%d]*$") then
+				local f = io.open(path, "rb")
+				local magic = f and f:read(4)
+				if f then
+					f:close()
+				end
+				if magic == "\127ELF" then
+					found[#found + 1] = { path = path, mtime = (vim.uv.fs_stat(path) or { mtime = { sec = 0 } }).mtime.sec }
+				end
+			end
+		end
+	end
+	walk(vim.fn.getcwd(), 0)
+	table.sort(found, function(a, b)
+		return a.mtime > b.mtime
+	end)
+	return vim.tbl_map(function(f)
+		return f.path
+	end, found)
+end
+
+-- Pick a program to debug: the binaries found, or type a path.
+local function pick_binary()
+	return coroutine.create(function(co)
+		local items = find_binaries()
+		table.insert(items, "Other path…")
+		vim.ui.select(items, {
+			prompt = "Debug which program?",
+			format_item = function(p)
+				return vim.fn.fnamemodify(p, ":.")
+			end,
+		}, function(choice)
+			if choice == "Other path…" then
+				vim.ui.input({ prompt = "Program: ", completion = "file", default = vim.fn.getcwd() .. "/" }, function(p)
+					coroutine.resume(co, (p and p ~= "") and vim.fn.fnamemodify(p, ":p") or dap().ABORT)
+				end)
+			else
+				coroutine.resume(co, choice or dap().ABORT)
+			end
+		end)
+	end)
+end
+
+local function ask_args()
+	return vim.split(vim.fn.input("Arguments: "), " ", { trimempty = true })
+end
+
+local function c_configurations(lang)
+	local base = { type = "xray-codelldb", request = "launch", cwd = "${workspaceFolder}", stopOnEntry = false, sourceLanguages = { lang } }
+	return {
+		vim.tbl_extend("force", base, { name = "Build this file and debug it", program = build_this_file }),
+		vim.tbl_extend("force", base, { name = "Debug a program (pick a binary)", program = pick_binary }),
+		vim.tbl_extend("force", base, { name = "Debug a program with arguments", program = pick_binary, args = ask_args }),
+	}
 end
 
 local function debug_target()
@@ -61,9 +170,9 @@ end
 return {
 	{
 		"mfussenegger/nvim-dap",
-		dependencies = { "igorlfs/nvim-dap-view" },
+		dependencies = { "igorlfs/nvim-dap-view", "mfussenegger/nvim-dap-python" },
 		keys = {
-			{ "<leader>dd", debug_target, desc = "Debug: pick a target (Rust: debuggables)" },
+			{ "<leader>dd", debug_target, desc = "Debug: pick a target (Rust: debuggables · C/C++: build or pick a binary · Python)" },
 			{ "<leader>dl", function() dap().run_last() end, desc = "Debug: run last target again" },
 			{ "<leader>db", function() dap().toggle_breakpoint() end, desc = "Debug: toggle breakpoint" },
 			{ "<F9>", function() dap().toggle_breakpoint() end, desc = "Debug: toggle breakpoint" },
@@ -124,6 +233,17 @@ return {
 			sign("DapStopped", { text = "▶", texthl = "DapStopped", linehl = "DapStoppedLine" })
 
 			require("vango.xray").setup()
+
+			local d = dap()
+			d.adapters["xray-codelldb"] = c_adapter
+			d.configurations.c = c_configurations("c")
+			d.configurations.cpp = c_configurations("cpp")
+
+			-- Python: debugpy from mason (its own venv), nvim-dap-python's configs
+			local debugpy = vim.fn.stdpath("data") .. "/mason/packages/debugpy/venv/bin/python"
+			if vim.fn.executable(debugpy) == 1 then
+				require("dap-python").setup(debugpy)
+			end
 
 			require("dap-view").setup({
 				auto_toggle = true, -- the view opens when a session starts and closes when it ends

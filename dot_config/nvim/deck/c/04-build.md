@@ -64,8 +64,32 @@ clangd needs `compile_commands.json` in the project root (CMake writes it; for m
 
 ## Debugging in nvim
 
-The same keys as Rust: `Space db` breakpoint, `F5` start, `F10` / `F11` / `F12` step, `Space dv` view.
-codelldb debugs C and C++; build with `-g -O0`.
+The same keys as Rust: `Space db` breakpoint, `Space dd` start, `F10` / `F11` / `F12` step, `Space dk` value, `Space dv` view.
+`Space dd` asks what to debug:
+
+| Choice | Does |
+| ------ | ---- |
+| Build this file and debug it | `gcc`/`g++ -g -O0 -Wall -Wextra` into nvim's cache; errors land in quickfix |
+| Debug a program (pick a binary) | every executable under the project (`build/`, …), newest first, or type a path |
+| … with arguments | the same, asks for the arguments |
+
+`Space dl` runs the last one again. Projects with make/CMake: build with `-g -O0` (`-DCMAKE_BUILD_TYPE=Debug`), then pick the binary.
+
+## X-ray for C and C++
+
+The memory view works here too (codelldb behind xray-dap): every declaration gets a note, `Space dx` opens the map.
+
+| Arrow | Means |
+| ----- | ----- |
+| `─▶ points` | a C pointer: to a local, a malloc'd block (`int[6]`, `char[6]`), a string literal |
+| `NULL` | a null pointer is a value, not an arrow |
+| `─▶ owns` | C++: `std::vector`'s buffer, a long `std::string`'s bytes, `unique_ptr`, map/set nodes |
+| `═▶ shares` | `shared_ptr`s of one object, with strong/weak counts |
+| `─▷ refers` | a C++ reference `T &` |
+
+A malloc'd block shows as many elements as fit (glibc rounds up: `malloc(16)` has room for 24 bytes).
+Short `std::string`s are marked inline: their bytes live inside the object (SSO).
+`free()` lists the block under *freed*; a vector that outgrows its capacity gets a "buffer moved" note.
 
 ## gdb / lldb basics
 

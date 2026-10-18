@@ -57,7 +57,7 @@ local function chunks_for(g, s, moved_into, many)
     edges[#edges + 1] = g.edges[i + 1]
   end
   -- a plain borrow says it all with its arrow; others show their value
-  local only_borrow = #edges > 0 and (edges[1].kind == "borrow" or edges[1].kind == "borrow_mut")
+  local only_borrow = #edges > 0 and (edges[1].kind == "borrow" or edges[1].kind == "borrow_mut" or edges[1].kind == "ref")
   if not only_borrow or changed then
     local summary = map.clip(s.summary, 40)
     if summary:match("^len %d+$") and #edges > 0 then

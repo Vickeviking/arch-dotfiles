@@ -58,6 +58,9 @@ breakpoint()        # stops here in pdb: n next, s step, c continue, p expr, l l
 
 `python -m pdb script.py` from the start; `python -X importtime app.py` to see slow imports.
 
+In nvim: the same keys as Rust and C (debugpy). `Space db` breakpoint, `Space dd` start (*file*, *file:args*, …),
+`F10` / `F11` / `F12` step, `Space dk` value, `Space dv` view.
+
 ## Profiling
 
 | Tool | For |

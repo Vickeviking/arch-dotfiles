@@ -54,7 +54,9 @@ local function short(p)
 end
 
 local function empty(b, info)
-  b.add({ { "X-ray shows your program's memory while you debug Rust.", "XrayName" } })
+  local ft = vim.bo.filetype
+  local c_like = ft == "c" or ft == "cpp"
+  b.add({ { c_like and "X-ray shows your program's memory while you debug C and C++." or "X-ray shows your program's memory while you debug Rust.", "XrayName" } })
   b.blank()
   if info and info.ended then
     b.add({ { "The debug session ended. Start another one to see memory again.", "XrayDim" } })
@@ -64,10 +66,10 @@ local function empty(b, info)
   b.add({ { "  2  ", "XrayLabel" }, { "  start debugging       ", "XrayValue" }, { "Space dd", "DeckKbd" }, { "  (pick a target)", "XrayDim" } })
   b.add({ { "  3  ", "XrayLabel" }, { "  step                  ", "XrayValue" }, { "Space dn / di / do", "DeckKbd" } })
   b.blank()
-  b.add({ { "Every stop fills this view in. Each let line also gets a short note", "XrayDim" } })
+  b.add({ { c_like and "Every stop fills this view in. Each declaration also gets a short note" or "Every stop fills this view in. Each let line also gets a short note", "XrayDim" } })
   b.add({ { "about what it holds and where it points (", "XrayDim" }, { "Space dX", "DeckKbd" }, { " turns those off).", "XrayDim" } })
   b.blank()
-  b.add(map.legend())
+  b.add(map.legend(c_like and ft or nil))
 end
 
 -- where the stopped frame's locals are declared, for jumps and moved-from marks
@@ -126,7 +128,7 @@ local function tab_memory()
     b.add(segs)
     b.blank()
   end
-  b.add(map.legend())
+  b.add(map.legend(g.lang))
   b.blank()
   local lines, hls, rows = map.render(g, { width = panel.width or 110, moved = fi.moved })
   local base = #b.lines
@@ -335,6 +337,11 @@ local WHY = {
   ["two-owners"] = "After a move both names still hold the same bits, but only the new owner counts: the old one is never used or dropped again, so the buffer is freed exactly once.",
 }
 
+-- the same notes for a C++ program: no borrow checker to stop the dangling
+local WHY_CPP = {
+  realloc = "A std::vector that runs out of capacity moves to a bigger buffer and frees the old one. Pointers, references and iterators into the old buffer now dangle, and the compiler won't stop you using them: reserve() up front, or keep indices instead.",
+}
+
 local function insights(g)
   local out = {}
   for _, bl in ipairs(g.blocks) do
@@ -372,8 +379,9 @@ function M._tab_changes()
     for i, part in ipairs(map.wrap(n.text:gsub("`", ""), w)) do
       b.add({ { i == 1 and icon or "  ", hl }, { part, hl } })
     end
-    if WHY[n.kind] then
-      for _, part in ipairs(map.wrap(WHY[n.kind], w - 2)) do
+    local why = (g.lang == "cpp" and WHY_CPP or WHY)[n.kind]
+    if why then
+      for _, part in ipairs(map.wrap(why, w - 2)) do
         b.add({ { "    ", nil }, { part, "XrayDim" } })
       end
     end
