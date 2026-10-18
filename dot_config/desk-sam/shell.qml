@@ -143,7 +143,8 @@ ShellRoot {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.namespace: "desk:sam"
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+        // keyboard only while his menu is open, so Esc can close it
+        WlrLayershell.keyboardFocus: menuBox.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
         readonly property real dpr: screen ? screen.devicePixelRatio : 1
         // his spot: upper right by default, or wherever you last dropped him
@@ -158,7 +159,7 @@ ShellRoot {
             Region { item: toyItem }
             Region { item: bowl }
             Region { item: treatItem }
-            Region { item: menuBox.visible ? menuBox : null }
+            Region { item: menuBox.visible ? clickAway : null }
         }
 
         // ---- Sam ---------------------------------------------------------
@@ -285,6 +286,17 @@ ShellRoot {
         }
 
         // ---- his menu: right click Sam (or the waybar paw) ------------------
+        // a click anywhere outside the menu just closes it, like any popup
+        MouseArea {
+            id: clickAway
+            anchors.fill: parent
+            visible: menuBox.visible
+            z: 45
+            acceptedButtons: Qt.AllButtons
+            onPressed: menuBox.visible = false
+            focus: menuBox.visible
+            Keys.onEscapePressed: menuBox.visible = false
+        }
         Rectangle {
             id: menuBox
             visible: false
