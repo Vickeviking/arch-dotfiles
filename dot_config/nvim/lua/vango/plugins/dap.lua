@@ -15,6 +15,49 @@ local function debug_target()
 	end
 end
 
+-- Space dk works like K: the value pops up without taking the cursor, any
+-- move closes it, and Space dk again jumps in (Enter expands, q/Esc closes).
+-- dap-view's default enters the 1-line float, which traps j/k.
+local function hover_value()
+	local dv_state = require("dap-view.state")
+	-- strict boolean: dap-view reads enter == nil as "enter"
+	local was_open = dv_state.hover_winnr ~= nil and vim.api.nvim_win_is_valid(dv_state.hover_winnr)
+	require("dap-view").hover(nil, was_open)
+	if was_open then
+		return
+	end
+	local src = vim.api.nvim_get_current_win()
+	local pos = vim.api.nvim_win_get_cursor(src)
+	vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "InsertEnter", "BufLeave" }, {
+		buffer = vim.api.nvim_win_get_buf(src),
+		callback = function(ev)
+			local w = dv_state.hover_winnr
+			if not (w and vim.api.nvim_win_is_valid(w)) then
+				return true -- already gone: drop this autocmd
+			end
+			if ev.event == "BufLeave" then
+				-- decide after the jump lands: into the popup keeps it open
+				vim.schedule(function()
+					if vim.api.nvim_win_is_valid(w) and vim.api.nvim_get_current_win() ~= w then
+						vim.api.nvim_win_close(w, true)
+					end
+				end)
+				return true
+			end
+			if vim.api.nvim_get_current_win() == w then
+				return
+			end
+			-- CursorMoved can fire without a real move; only close on one
+			local now = vim.api.nvim_win_get_cursor(0)
+			if ev.event == "CursorMoved" and now[1] == pos[1] and now[2] == pos[2] then
+				return
+			end
+			vim.api.nvim_win_close(w, true)
+			return true
+		end,
+	})
+end
+
 return {
 	{
 		"mfussenegger/nvim-dap",
@@ -47,7 +90,7 @@ return {
 			{ "<leader>do", function() dap().step_out() end, desc = "Debug: step out" },
 			{ "<F12>", function() dap().step_out() end, desc = "Debug: step out" },
 			{ "<leader>dC", function() dap().run_to_cursor() end, desc = "Debug: run to cursor" },
-			{ "<leader>dk", function() require("dap-view").hover() end, desc = "Debug: value under cursor" },
+			{ "<leader>dk", hover_value, desc = "Debug: value under cursor (again: jump in)" },
 			-- true: the program-output terminal hides/shows together with the view
 			{ "<leader>dv", function() require("dap-view").toggle(true) end, desc = "Debug: toggle debug view + output" },
 			{ "<leader>dw", function() require("dap-view").add_expr() end, desc = "Debug: watch word under cursor" },
@@ -85,6 +128,7 @@ return {
 			require("dap-view").setup({
 				auto_toggle = true, -- the view opens when a session starts and closes when it ends
 				virtual_text = { enabled = true, position = "eol" },
+				keymaps = { hover = { quit = { "q", "<Esc>" } } },
 			})
 		end,
 	},
