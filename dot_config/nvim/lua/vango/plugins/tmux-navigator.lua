@@ -46,5 +46,36 @@ return {
 		vim.keymap.set("n", "<C-j>", n.NvimTmuxNavigateDown, { silent = true })
 		vim.keymap.set("n", "<C-k>", n.NvimTmuxNavigateUp, { silent = true })
 		vim.keymap.set("n", "<C-\\>", n.NvimTmuxNavigateLastActive, { silent = true })
+
+		-- Terminal splits (debug output, Claude Code): C-h/j/k/l leave terminal
+		-- mode and move, so you land in normal mode where j/k scroll. Floating
+		-- terminals (Space z, lazygit, htop) keep the keys for the shell/app.
+		local dirs = { h = "Left", j = "Down", k = "Up", l = "Right" }
+		for key, dir in pairs(dirs) do
+			local lhs = "<C-" .. key .. ">"
+			vim.keymap.set("t", lhs, function()
+				if vim.api.nvim_win_get_config(0).relative ~= "" then
+					return lhs
+				end
+				return "<C-\\><C-n><Cmd>lua require('nvim-tmux-navigation').NvimTmuxNavigate" .. dir .. "()<CR>"
+			end, { expr = true, silent = true, desc = "Terminal: window " .. dir:lower() })
+		end
+
+		-- Always: plugins (nvim-tree's C-k = Info, ...) set buffer-local
+		-- C-h/j/k/l that shadow the global ones. Drop them in normal windows;
+		-- floats (deck, telescope, hovers) keep their own.
+		vim.api.nvim_create_autocmd({ "BufEnter", "LspAttach", "FileType" }, {
+			group = vim.api.nvim_create_augroup("vango_nav_keys", { clear = true }),
+			callback = function(ev)
+				vim.schedule(function()
+					if not vim.api.nvim_buf_is_valid(ev.buf) or vim.api.nvim_win_get_config(0).relative ~= "" then
+						return
+					end
+					for key in pairs(dirs) do
+						pcall(vim.keymap.del, "n", "<C-" .. key .. ">", { buffer = ev.buf })
+					end
+				end)
+			end,
+		})
 	end,
 }

@@ -48,7 +48,8 @@ return {
 			{ "<F12>", function() dap().step_out() end, desc = "Debug: step out" },
 			{ "<leader>dC", function() dap().run_to_cursor() end, desc = "Debug: run to cursor" },
 			{ "<leader>dk", function() require("dap-view").hover() end, desc = "Debug: value under cursor" },
-			{ "<leader>dv", function() require("dap-view").toggle() end, desc = "Debug: toggle debug view" },
+			-- true: the program-output terminal hides/shows together with the view
+			{ "<leader>dv", function() require("dap-view").toggle(true) end, desc = "Debug: toggle debug view + output" },
 			{ "<leader>dw", function() require("dap-view").add_expr() end, desc = "Debug: watch word under cursor" },
 			{ "<leader>dr", function() dap().repl.toggle() end, desc = "Debug: toggle REPL" },
 			{ "<leader>dq", function() dap().terminate() end, desc = "Debug: stop" },

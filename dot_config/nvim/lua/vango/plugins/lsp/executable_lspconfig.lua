@@ -100,10 +100,11 @@ return {
 				map("gi", "<cmd>Telescope lsp_implementations<cr>", "Go to implementation")
 				map("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
 				map("<leader>ca", vim.lsp.buf.code_action, "Code actions")
-				map("<C-j>", function()
+				-- ]d / [d (not C-j/C-k: those are window navigation everywhere)
+				map("]d", function()
 					vim.diagnostic.jump({ count = 1, float = true })
 				end, "Next diagnostic")
-				map("<C-k>", function()
+				map("[d", function()
 					vim.diagnostic.jump({ count = -1, float = true })
 				end, "Prev diagnostic")
 
