@@ -1,0 +1,166 @@
+{{ if eq .chezmoi.hostname "vango-arch-thinkpad" -}}
+# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
+# default Monitor config
+
+# *********************************************************** #
+# 
+# NOTE: This will be overwritten by NWG-Displays 
+# once you use and click apply. You can still find this
+# default at ~/.config/hypr/Monitor_Profiles/default.conf
+#
+# *********************************************************** #
+
+
+# Monitor Configuration
+# See Hyprland wiki for more details
+# https://wiki.hyprland.org/Configuring/Monitors/
+# Configure your Display resolution, offset, scale and Monitors here, use `hyprctl monitors` to get the info.
+
+
+# NOTE: for laptop, kindly check notes in Laptops.conf regarding display
+# Created this inorder for the monitor display to not wake up if not intended.
+# See here: https://github.com/hyprwm/Hyprland/issues/4090
+
+# Some examples to set your own monitor
+#monitor = eDP-1, preferred, auto, 1
+#monitor = eDP-1, 2560x1440@165, 0x0, 1 #own screen
+#monitor = DP-3, 1920x1080@240, auto, 1 
+#monitor = DP-1, preferred, auto, 1
+#monitor = HDMI-A-1, preferred,auto,1
+
+# QEMU-KVM, virtual box or vmware
+#monitor = Virtual-1, 1920x1080@60,auto,1
+
+# to disable a monitor
+#monitor=name,disable
+
+# Mirror samples
+#monitor=DP-3,1920x1080@60,0x0,1,mirror,DP-2
+#monitor=,preferred,auto,1,mirror,eDP-1
+#monitor=HDMI-A-1,2560x1440@144,0x0,1,mirror,eDP-1
+
+# 10 bit monitor support - See wiki https://wiki.hyprland.org/Configuring/Monitors/#10-bit-support - See NOTES below
+# NOTE: Colors registered in Hyprland (e.g. the border color) do not support 10 bit.
+# NOTE: Some applications do not support screen capture with 10 bit enabled. (Screen captures like OBS may render black screen)
+# monitor=,preferred,auto,1,bitdepth,10
+
+#monitor=eDP-1,transform,0
+#monitor=eDP-1,addreserved,10,10,10,49
+
+# workspaces - Monitor rules
+# https://wiki.hyprland.org/Configuring/Workspace-Rules/
+# SUPER E - Workspace-Rules 
+# See ~/.config/hypr/UserConfigs/WorkspaceRules.conf
+
+
+
+# ===================================================== #
+# === Viktor's Active Dual Monitor Setup (Arch 2025) === #
+# ===================================================== #
+
+# Extern skärm matchas på beskrivning i stället för portnamn, så profilen
+# fortsätter fungera även om dockan exponerar den som t.ex. DP-4 i stället
+# för DP-1/DP-2/HDMI-A-1.
+monitor=desc:Samsung Electric Company S27B80T HCJX400562,3840x2160@60,-2560x0,1.5
+
+# --------------------------------------------------------------------------- #
+# Laptop panel
+# --------------------------------------------------------------------------- #
+# The panel in this ThinkPad is a LEN LP140WFA-SPD2: native 1920x1080 @ 60.02Hz.
+# It does NOT support 2560x1600 or 240Hz -- the old config asked for a mode the
+# panel cannot do, so Hyprland letterboxed the image and you got black bars
+# along the edges. `preferred` always picks the panel's native EDID mode, so
+# this stays correct even if the machine or the connector name changes.
+#
+# scale 1.2 -> 1920x1080 becomes 1600x900 logical, which is almost exactly the
+# same apparent text/icon size as the old 2560x1600 @ 1.6 (= 1600x1000) setup.
+# Change the 1.2 if you want things bigger (1.25) or smaller/sharper (1.0).
+#
+# Explicit equivalent, if you ever need to pin the mode by hand:
+#monitor=eDP-1,1920x1080@60,0x0,1.2
+
+monitor=eDP-2,preferred,0x0,1.2
+
+# Fallback for eDP-1 (the connector this machine actually reports)
+monitor=eDP-1,preferred,0x0,1.2
+{{ else -}}
+# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  #
+# default Monitor config
+
+# *********************************************************** #
+# 
+# NOTE: This will be overwritten by NWG-Displays 
+# once you use and click apply. You can still find this
+# default at ~/.config/hypr/Monitor_Profiles/default.conf
+#
+# *********************************************************** #
+
+
+# Monitor Configuration
+# See Hyprland wiki for more details
+# https://wiki.hyprland.org/Configuring/Monitors/
+# Configure your Display resolution, offset, scale and Monitors here, use `hyprctl monitors` to get the info.
+
+
+# NOTE: for laptop, kindly check notes in Laptops.conf regarding display
+# Created this inorder for the monitor display to not wake up if not intended.
+# See here: https://github.com/hyprwm/Hyprland/issues/4090
+
+# Some examples to set your own monitor
+#monitor = eDP-1, preferred, auto, 1
+#monitor = eDP-1, 2560x1440@165, 0x0, 1 #own screen
+#monitor = DP-3, 1920x1080@240, auto, 1 
+#monitor = DP-1, preferred, auto, 1
+#monitor = HDMI-A-1, preferred,auto,1
+
+# QEMU-KVM, virtual box or vmware
+#monitor = Virtual-1, 1920x1080@60,auto,1
+
+# to disable a monitor
+#monitor=name,disable
+
+# Mirror samples
+#monitor=DP-3,1920x1080@60,0x0,1,mirror,DP-2
+#monitor=,preferred,auto,1,mirror,eDP-1
+#monitor=HDMI-A-1,2560x1440@144,0x0,1,mirror,eDP-1
+
+# 10 bit monitor support - See wiki https://wiki.hyprland.org/Configuring/Monitors/#10-bit-support - See NOTES below
+# NOTE: Colors registered in Hyprland (e.g. the border color) do not support 10 bit.
+# NOTE: Some applications do not support screen capture with 10 bit enabled. (Screen captures like OBS may render black screen)
+# monitor=,preferred,auto,1,bitdepth,10
+
+#monitor=eDP-1,transform,0
+#monitor=eDP-1,addreserved,10,10,10,49
+
+# workspaces - Monitor rules
+# https://wiki.hyprland.org/Configuring/Workspace-Rules/
+# SUPER E - Workspace-Rules 
+# See ~/.config/hypr/UserConfigs/WorkspaceRules.conf
+
+
+
+# ===================================================== #
+# === Viktor's Active Dual Monitor Setup (Arch 2025) === #
+# ===================================================== #
+
+# Extern skärm matchas på beskrivning i stället för portnamn, så profilen
+# fortsätter fungera även om dockan exponerar den som t.ex. DP-4 i stället
+# för DP-1/DP-2/HDMI-A-1.
+monitor=desc:Samsung Electric Company S27B80T HCJX400562,3840x2160@60,-2560x0,1.5
+
+# Performance note:
+# The laptop panel starts at 60Hz here because that is the safest docked default.
+# RefreshModeDaemon.py will automatically raise it back to 240Hz when no external
+# monitor is connected, and drop it to 60Hz again when docked.
+# To restore 240Hz later, either:
+# 1. change the eDP-2 and eDP-1 lines below from @60 to @240, or
+# 2. load ~/.config/hypr/Monitor_Profiles/default.conf via MonitorProfiles.sh,
+# 3. or disable the refresh-mode daemon in Startup_Apps.conf.
+# This file is sourced on Hyprland startup, but can be overwritten by nwg-displays
+# or by loading a different profile script.
+# Laptopskärmen (eDP-2) 2560x1600@60, placerad till höger (RIGHT side)
+monitor=eDP-2,2560x1600@60,0x0,1.6
+
+# Fallback for eDP-1 (in case it switches)
+monitor=eDP-1,2560x1600@60,0x0,1.6
+{{ end -}}

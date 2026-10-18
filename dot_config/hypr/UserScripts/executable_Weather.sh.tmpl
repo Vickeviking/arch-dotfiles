@@ -1,0 +1,228 @@
+{{ if eq .chezmoi.hostname "vango-arch-thinkpad" -}}
+#!/usr/bin/env bash
+# Weather module for Waybar. Data from wttr.in (https://github.com/chubin/wttr.in)
+#
+# Rewritten from the JaKooLit original, which parsed wttr.in's plain-text output
+# with a fragile IFS/array dance, emitted two JSON objects on the fallback
+# branch (which Waybar rejects), and produced a single-line tooltip with no
+# forecast. This version uses wttr.in's ?format=j1 JSON API via jq instead.
+#
+# Location: pinned to Uppsala. IP geolocation put this machine in Norrmalm,
+# Stockholm (the ISP's exit, not where the laptop is), and a bare "Uppsala"
+# resolves to Bossarby ~36 km north of the city -- "Uppsala,Sweden" lands on
+# 59.850,17.633, about a kilometre from the cathedral.
+# Override at runtime with WEATHER_CITY, e.g. WEATHER_CITY=Gothenburg.
+
+set -uo pipefail
+
+city="${WEATHER_CITY:-Uppsala,Sweden}"
+cache="$HOME/.cache/waybar-weather.json"
+cache_ttl=1200          # seconds before refetching
+timeout=12
+
+mkdir -p "$(dirname "$cache")"
+
+fetch() {
+    curl -sf --max-time "$timeout" "https://wttr.in/${city}?format=j1" -o "$cache.tmp" \
+        && jq -e . "$cache.tmp" >/dev/null 2>&1 \
+        && mv "$cache.tmp" "$cache"
+}
+
+# Refetch when the cache is missing, empty or stale.
+if [ ! -s "$cache" ]; then
+    fetch
+elif [ "$(( $(date +%s) - $(stat -c %Y "$cache") ))" -gt "$cache_ttl" ]; then
+    fetch    # keep serving the old cache if this fails
+fi
+rm -f "$cache.tmp"
+
+if [ ! -s "$cache" ]; then
+    echo '{"text":"󰅤","tooltip":"Väderdata ej tillgänglig","class":"weather-offline"}'
+    exit 0
+fi
+
+# WWO weather codes -> Nerd Font Material Design icons.
+icon_for() {
+    case "$1" in
+        113)                                  [ "${2:-yes}" = yes ] && echo "󰖙" || echo "󰖔" ;;
+        116)                                  echo "󰖕" ;;
+        119|122)                              echo "󰖐" ;;
+        143|248|260)                          echo "󰖑" ;;
+        200|386|389|392|395)                  echo "󰖓" ;;
+        176|263|266|293|296|353)              echo "󰖗" ;;
+        299|302|305|308|356|359)              echo "󰖖" ;;
+        179|182|185|227|230|281|284|311|314|317|320|323|326|329|332|335|338|350|362|365|368|371|374|377)
+                                              echo "󰖘" ;;
+        *)                                    echo "󰖐" ;;
+    esac
+}
+
+# wttr.in only speaks English here, so map the code to a Swedish phrase.
+sv_desc() {
+    case "$obs_code" in
+        113)                 echo "Klart" ;;
+        116)                 echo "Delvis molnigt" ;;
+        119)                 echo "Molnigt" ;;
+        122)                 echo "Mulet" ;;
+        143|248|260)         echo "Dimma" ;;
+        176|263|266|293|296) echo "Lätt regn" ;;
+        299|302)             echo "Regn" ;;
+        305|308)             echo "Kraftigt regn" ;;
+        353)                 echo "Regnskur" ;;
+        356|359)             echo "Kraftig regnskur" ;;
+        200|386|389)         echo "Åska" ;;
+        392|395)             echo "Snöby med åska" ;;
+        179|323|326|368)     echo "Lätt snöfall" ;;
+        329|332|371)         echo "Snöfall" ;;
+        335|338)             echo "Kraftigt snöfall" ;;
+        227|230)             echo "Snöstorm" ;;
+        182|185|281|284|311|314|317|320|350|362|365|374|377)
+                             echo "Snöblandat regn" ;;
+        *)                   echo "$1" ;;
+    esac
+}
+
+sv_day() {   # 1=Mon .. 7=Sun
+    case "$1" in
+        1) echo "Mån" ;; 2) echo "Tis" ;; 3) echo "Ons" ;; 4) echo "Tors" ;;
+        5) echo "Fre" ;; 6) echo "Lör" ;; 7) echo "Sön" ;; *) echo "?" ;;
+    esac
+}
+
+pango_escape() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
+
+read -r temp feels desc wind humid obs_code < <(
+    jq -r '.current_condition[0] as $c |
+        [$c.temp_C, $c.FeelsLikeC, ($c.weatherDesc[0].value|gsub("^\\s+|\\s+$";"")|gsub(" ";"_")),
+         $c.windspeedKmph, $c.humidity, $c.weatherCode] | @tsv' "$cache"
+)
+desc="${desc//_/ }"
+desc=$(sv_desc "$desc")
+
+# wttr.in reports area and region separately, which reads as "Uppsala, Uppsala
+# Lan" for a city that shares its county's name. Collapse that to just the city.
+location=$(jq -r '.nearest_area[0] as $a |
+    ($a.areaName[0].value) as $city | ($a.region[0].value) as $region |
+    if ($region | ascii_downcase | startswith($city | ascii_downcase))
+    then $city else "\($city), \($region)" end' "$cache")
+
+# Day vs night from the local hour, for the clear-sky icon.
+hour=$(date +%-H)
+if [ "$hour" -ge 6 ] && [ "$hour" -lt 21 ]; then is_day=yes; else is_day=no; fi
+
+icon=$(icon_for "$obs_code" "$is_day")
+
+# --- tooltip ---------------------------------------------------------------
+tip="<b>$(printf '%s' "$location" | pango_escape)</b>"
+tip+=$'\n'"$(printf '%s' "$desc" | pango_escape) · känns som ${feels}°C"
+tip+=$'\n'"Vind ${wind} km/h · Fukt ${humid}%"
+tip+=$'\n'
+
+forecast=$(jq -r '.weather[:3][] |
+    [.date, .mintempC, .maxtempC, .hourly[4].weatherCode, (.hourly | map(.chanceofrain|tonumber) | max)] | @tsv' "$cache")
+
+first=1
+while IFS=$'\t' read -r date lo hi code rain; do
+    [ -n "$date" ] || continue
+    if [ "$first" = 1 ]; then
+        label="Idag"; first=0
+    else
+        label=$(sv_day "$(date -d "$date" +%u)")
+    fi
+    ficon=$(icon_for "$code" yes)
+    tip+=$'\n'"$(printf '<tt><b>%-5s</b> %3s° – %3s°   %s  %3s%%</tt>' "$label" "$lo" "$hi" "$ficon" "$rain")"
+done <<< "$forecast"
+
+jq -cn --arg text "$icon $temp°C" \
+      --arg alt "$location" \
+      --arg tooltip "$tip" \
+      --arg class "weather" \
+      '{text:$text, alt:$alt, tooltip:$tooltip, class:$class}'
+{{ else -}}
+#!/bin/bash
+# /* ---- 💫 https://github.com/JaKooLit 💫 ---- */  ##
+# weather info from wttr. https://github.com/chubin/wttr.in
+# Remember to add city 
+
+city=
+cachedir="$HOME/.cache/rbn"
+cachefile=${0##*/}-$1
+
+if [ ! -d $cachedir ]; then
+    mkdir -p $cachedir
+fi
+
+if [ ! -f $cachedir/$cachefile ]; then
+    touch $cachedir/$cachefile
+fi
+
+# Save current IFS
+SAVEIFS=$IFS
+# Change IFS to new line.
+IFS=$'\n'
+
+cacheage=$(($(date +%s) - $(stat -c '%Y' "$cachedir/$cachefile")))
+if [ $cacheage -gt 1740 ] || [ ! -s $cachedir/$cachefile ]; then
+    data=($(curl -s https://en.wttr.in/"$city"$1\?0qnT 2>&1))
+    echo ${data[0]} | cut -f1 -d, > $cachedir/$cachefile
+    echo ${data[1]} | sed -E 's/^.{15}//' >> $cachedir/$cachefile
+    echo ${data[2]} | sed -E 's/^.{15}//' >> $cachedir/$cachefile
+fi
+
+weather=($(cat $cachedir/$cachefile))
+
+# Restore IFSClear
+IFS=$SAVEIFS
+
+temperature=$(echo ${weather[2]} | sed -E 's/([[:digit:]]+)\.\./\1 to /g')
+
+#echo ${weather[1]##*,}
+
+# https://fontawesome.com/icons?s=solid&c=weather
+case $(echo ${weather[1]##*,} | tr '[:upper:]' '[:lower:]') in
+"clear" | "sunny")
+    condition=""
+    ;;
+"partly cloudy")
+    condition="󰖕"
+    ;;
+"cloudy")
+    condition=""
+    ;;
+"overcast")
+    condition=""
+    ;;
+"fog" | "freezing fog")
+    condition=""
+    ;;
+"patchy rain possible" | "patchy light drizzle" | "light drizzle" | "patchy light rain" | "light rain" | "light rain shower" | "mist" | "rain")
+    condition="󰼳"
+    ;;
+"moderate rain at times" | "moderate rain" | "heavy rain at times" | "heavy rain" | "moderate or heavy rain shower" | "torrential rain shower" | "rain shower")
+    condition=""
+    ;;
+"patchy snow possible" | "patchy sleet possible" | "patchy freezing drizzle possible" | "freezing drizzle" | "heavy freezing drizzle" | "light freezing rain" | "moderate or heavy freezing rain" | "light sleet" | "ice pellets" | "light sleet showers" | "moderate or heavy sleet showers")
+    condition="󰼴"
+    ;;
+"blowing snow" | "moderate or heavy sleet" | "patchy light snow" | "light snow" | "light snow showers")
+    condition="󰙿"
+    ;;
+"blizzard" | "patchy moderate snow" | "moderate snow" | "patchy heavy snow" | "heavy snow" | "moderate or heavy snow with thunder" | "moderate or heavy snow showers")
+    condition=""
+    ;;
+"thundery outbreaks possible" | "patchy light rain with thunder" | "moderate or heavy rain with thunder" | "patchy light snow with thunder")
+    condition=""
+    ;;
+*)
+    condition=""
+    echo -e "{\"text\":\""$condition"\", \"alt\":\""${weather[0]}"\", \"tooltip\":\""${weather[0]}: $temperature ${weather[1]}"\"}"
+    ;;
+esac
+
+#echo $temp $condition
+
+echo -e "{\"text\":\""$temperature $condition"\", \"alt\":\""${weather[0]}"\", \"tooltip\":\""${weather[0]}: $temperature ${weather[1]}"\"}"
+
+cached_weather=" $temperature  \n$condition ${weather[1]}"
+
+echo -e $cached_weather >  "$HOME/.cache/.weather_cache"{{ end -}}
