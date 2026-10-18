@@ -39,3 +39,17 @@ Build output and caches stay out (`excludes`). Snapshots kept: 7 daily,
 
 The ThinkPad → desktop direction needs sshd on the desktop, which is off on
 purpose; turn it on only if you want the ThinkPad backed up too.
+
+## Where the password lives
+
+- the desktop: `~/.config/desk-backup/password`
+- gunnar (the Pi): `~/.config/desk-backup/password-legion-arch` (only readable by vango)
+
+If the desktop is gone, restore from any machine with:
+
+    scp gunnar:.config/desk-backup/password-legion-arch /tmp/restic-pass
+    restic -r sftp:vango@vango-arch-thinkpad:/home/vango/backups/legion-arch \
+      --password-file /tmp/restic-pass snapshots
+
+Not on the ThinkPad on purpose: the backups and their key on one
+unencrypted laptop would make the encryption pointless if it were stolen.
