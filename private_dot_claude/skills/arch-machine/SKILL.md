@@ -26,6 +26,10 @@ The house rules in `~/.claude/CLAUDE.md` ("Viktor is the captain") apply in full
 
 `chezmoi apply` or `update` overwrites live files: run it only on paths whose `chezmoi diff` Viktor has seen.
 
+- **Colors come from `desk-theme`** (`~/.local/bin/desk-theme`, palettes in `~/.config/themes/palettes/`). It generates Hyprland, waybar, rofi, swaync, hyprlock, kitty, nvim, Claude Code, Chrome, GTK 3/4 (adw-gtk3 + `gtk.css`), Qt 5/6 (qt*ct palette, Fusion), the Desk folder icons, starship, btop, cava and zathura. Change a color in the palette or the generator, never in a generated file. chezmoi tracks the generator and palettes; each machine generates its own outputs (run `desk-theme <name>` after a sync).
+- **Per-machine files** (monitors, laptop waybar modules, brightness) are chezmoi templates on `.chezmoi.hostname` (`legion-arch`, `vango-arch-thinkpad`); keep both versions in the one template instead of leaving local edits uncommitted.
+- **Big binaries** (wallpapers, desk-art, `~/.themes`, `~/.icons`, `~/.local/share/themes`) stay out of git: `desk-sync` (dry run `desk-sync -n`) copies them desktop → ThinkPad, newer files only, never deleting.
+
 ## Packages and services
 
 - You may query freely: `pacman -Q/-Qi/-Ss`, `yay -Ss`, `systemctl status`, `journalctl`.

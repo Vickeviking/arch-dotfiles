@@ -129,14 +129,22 @@ shotactive() {
 }
 
 shotswappy() {
-	tmpfile=$(mktemp)
-	grim -g "$(slurp)" - >"$tmpfile" 
+	tmpfile=$(mktemp --suffix=.png)
+	geometry=$(slurp) || {
+		rm -f "$tmpfile"
+		exit 0
+	}
 
-  # Copy without saving
-  if [[ -s "$tmpfile" ]]; then
+	grim -g "$geometry" "$tmpfile"
+
+	# Copy and open in Swappy for annotation/saving.
+	if [[ -s "$tmpfile" ]]; then
 		wl-copy <"$tmpfile"
-    notify_view "swappy"
-  fi
+		"${sDIR}/Sounds.sh" --screenshot
+		swappy -f "$tmpfile"
+	fi
+
+	rm -f "$tmpfile"
 }
 
 if [[ ! -d "$dir" ]]; then

@@ -52,6 +52,7 @@
 		"backlight",
 		"custom/night_light",
 		"custom/refresh_mode",
+		"custom/battery_conservation",
 		"battery",
 	]
 },

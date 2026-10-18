@@ -150,6 +150,7 @@ tooltip {
 #custom-light_dark,
 #custom-lock,
 #custom-night_light,
+#custom-battery_conservation,
 #custom-hint,
 #custom-hypridle,
 #custom-menu,
@@ -162,6 +163,8 @@ tooltip {
 #custom-quit,
 #custom-reboot,
 #custom-settings,
+#custom-shutdown_timer,
+#custom-arcturon_server,
 #custom-spotify,
 #custom-swaync,
 #custom-tty,
@@ -209,6 +212,43 @@ tooltip {
 
 #custom-night_light.missing {
 	color: #f53c3c;
+}
+
+#custom-battery_conservation.on {
+	color: #7ee787;
+}
+
+#custom-battery_conservation.off {
+	opacity: 0.66;
+}
+
+#custom-battery_conservation.missing {
+	color: #f53c3c;
+}
+
+#custom-shutdown_timer.active {
+	color: #7dd3fc;
+}
+
+#custom-shutdown_timer.off {
+	opacity: 0.66;
+}
+
+/* Arcturon dev-server (13/9 2026) — samma sprak som shutdown_timer bredvid */
+#custom-arcturon_server.up {
+	color: #86efac;
+}
+
+#custom-arcturon_server.starting {
+	color: #fde047;
+}
+
+#custom-arcturon_server.partial {
+	color: #fdba74;
+}
+
+#custom-arcturon_server.down {
+	opacity: 0.55;
 }
 
 #pulseaudio.muted {
@@ -295,3 +335,21 @@ tooltip {
 
 #custom-swaync{
     color: #ffd700;}
+
+/*-----Spektra (musikvisualiserare, ~/dev/project/spektra)----*/
+#custom-spektra {
+	padding-left: 6px;
+	padding-right: 6px;
+	color: #c0caf5;
+}
+#custom-spektra.off { color: rgba(192, 202, 245, 0.4); }
+#custom-spektra.latt { color: #7dcfff; }
+#custom-spektra.medel { color: #bb9af7; }
+#custom-spektra.hog { color: #ff9e64; }
+#custom-spektra.max {
+	color: #ff2ea6;
+	animation: spektra-max 0.9s ease-in-out infinite alternate;
+}
+@keyframes spektra-max {
+	to { color: #2effe0; }
+}
