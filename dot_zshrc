@@ -4,6 +4,8 @@
 export ZSH="$HOME/.oh-my-zsh"
 
 ZSH_THEME="agnosterzak"
+# starship takes over the prompt once installed (colors from desk-theme, ~/.config/starship.toml)
+command -v starship >/dev/null && ZSH_THEME=""
 
 plugins=(
     git
@@ -13,6 +15,7 @@ plugins=(
 )
 
 source $ZSH/oh-my-zsh.sh
+command -v starship >/dev/null && eval "$(starship init zsh)"
 
 # Check archlinux plugin commands here
 # https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/archlinux
@@ -53,6 +56,13 @@ alias backpush="$HOME/syncing/computer_backup_sync/backup-push.sh"
 #alias backdeploy='$HOME/syncing/computer_backup_sync/backup-deploy.sh --confirm'
 export PATH="$HOME/.cargo/bin:$PATH"
 
+# Fly.io CLI installed by flyctl installer.
+export PATH="$HOME/.fly/bin:$PATH"
+
+# .NET SDK installed without root privileges.
+export DOTNET_ROOT="$HOME/.dotnet"
+export PATH="$DOTNET_ROOT:$PATH"
+
 alias code='code --ozone-platform-hint=auto --enable-features=UseOzonePlatform'
 
 # fix cursor
@@ -76,3 +86,30 @@ alias ticket="$HOME/dev/project/Arcturon/.local/ticket"
 
 # Google Chrome
 alias chrome='google-chrome-stable'
+
+# Raspberry Pi 5 (gunnar) — both aliases SSH in
+alias gunnar='ssh gunnar'
+alias pi5='ssh gunnar'
+
+# ── Li · lokal röstkloning (~/dev/rost-kloning) ──────────────────────────
+export LI_HOME="$HOME/dev/rost-kloning"
+export PATH="$LI_HOME/bin:$PATH"
+alias li-gui='li --ui'                       # öppna webbgränssnittet
+alias liui='li --ui'
+alias lis='li -l'                            # lista alla stilar
+alias li-asmr='li -s asmr'
+alias li-viska='li -s viskning'
+alias li-sensuell='li -s sensuell'
+alias li-glad='li -s glad'
+alias li-busig='li -s busig'
+alias li-lugn='li -s lugn'
+alias li-dramatisk='li -s dramatisk'
+alias li-cd='cd "$LI_HOME"'
+# läs upp det som ligger i urklipp: `lic` eller `lic -s asmr`
+lic() { wl-paste 2>/dev/null | li "$@" -; }
+
+# ── dumb-games ────────────────────────────────────────────────────────────
+export PATH="$HOME/.local/bin:$PATH"
+# Byn flyttade in i ~/dev/dumb-games och blir spelet Folket. Allt går numera
+# genom routern `dumb` — `dumb by ...`, `dumb rad ...`, `dumb komik ...`.
+# De gamla by-aliasen är borta med flit; de pekade på en symlänk som är borttagen.

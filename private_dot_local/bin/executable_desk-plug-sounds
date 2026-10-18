@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# desk-plug-sounds: a sound when a USB device or the charger is plugged in or out.
+# Runs as the desk-plug-sounds user service; listens to udev, plays desk-sound.
+last=0
+udevadm monitor --udev --property --subsystem-match=usb --subsystem-match=power_supply | while read -r line; do
+	case "$line" in
+	ACTION=*) action=${line#ACTION=} ;;
+	DEVTYPE=*) devtype=${line#DEVTYPE=} ;;
+	SUBSYSTEM=*) subsystem=${line#SUBSYSTEM=} ;;
+	POWER_SUPPLY_TYPE=*) pstype=${line#POWER_SUPPLY_TYPE=} ;;
+	POWER_SUPPLY_ONLINE=*) online=${line#POWER_SUPPLY_ONLINE=} ;;
+	"")
+		now=$(date +%s)
+		sound=""
+		if [ "$subsystem" = usb ] && [ "$devtype" = usb_device ]; then
+			[ "$action" = add ] && sound=device-added
+			[ "$action" = remove ] && sound=device-removed
+		elif [ "$subsystem" = power_supply ] && [ "$pstype" = Mains ] && [ "$action" = change ]; then
+			[ "$online" = 1 ] && sound=power-plug
+			[ "$online" = 0 ] && sound=power-unplug
+		fi
+		# hubs and docks announce several devices at once: one sound per second
+		if [ -n "$sound" ] && [ $((now - last)) -ge 1 ]; then
+			last=$now
+			"$HOME/.local/bin/desk-sound" "$sound" &
+		fi
+		action="" devtype="" subsystem="" pstype="" online=""
+		;;
+	esac
+done

@@ -5,6 +5,8 @@
 --   Space Space  ask (in visual mode: about the selection); Space aq works too
 --   Space ae   explain the diagnostic under the cursor
 --   :Ask …     ask straight from the command line
+--   Super+A    Quick ask from anywhere on the desktop (quick-ask script):
+--              a screenshot comes along, and Claude may read ~/.config
 --
 -- Every question carries a small context block: file, the function around
 -- the cursor (or the selection), the diagnostics on that line, and while the
@@ -22,6 +24,17 @@ Answer in GitHub Markdown. Lead with the answer; keep it short (a few lines or
 one code block) unless asked for depth. Tag code blocks with their language.
 Each question may start with an <editor> block describing what the user is
 looking at; use it when relevant, never repeat it back.]]
+
+-- Quick ask (Super+A): the screen and the dotfiles, read-only
+local QUICK = [[You are a concise helper on Viktor's Arch + Hyprland desktop.
+Viktor is comfortable with Rust, nvim, Arch and Hyprland: skip beginner
+explanations, refer to them as they/them. Answer in GitHub Markdown, short.
+A screenshot of the screen at the moment they asked is at %s: read it with
+the Read tool when the question is about what's on screen. Their dotfiles are
+in ~/.config (Hyprland Lua config in ~/.config/hypr, KoolDots base modules in
+hypr/lua are upstream; personal overrides in hypr/UserConfigs/user_*.lua).
+You can read files but not change them: when a change helps, show the exact
+edit (file path and the lines) for Viktor to make.]]
 
 local ns = vim.api.nvim_create_namespace("vango.ask")
 
@@ -199,7 +212,14 @@ local function label(row, text, group)
 end
 
 local function welcome()
-  local lines = {
+  local lines = S.quick and {
+    "",
+    "  Ask about anything on screen, or your dotfiles.",
+    "  The screenshot is attached; Claude can read ~/.config but not change it.",
+    "",
+    "  ⏎ send   ⇧⏎ new line   C-n new chat   Esc close",
+    "",
+  } or {
     "",
     "  Ask anything. The code you're looking at comes along.",
     "",
@@ -224,7 +244,7 @@ local function footer(busy)
     { " ⏎", "DeckFooterKey" }, { " send  ", "DeckFooter" },
     { "C-n", "DeckFooterKey" }, { " new  ", "DeckFooter" },
     { "Tab", "DeckFooterKey" }, { " answers  ", "DeckFooter" },
-    { "q", "DeckFooterKey" }, { " hide ", "DeckFooter" },
+    { S.quick and "Esc" or "q", "DeckFooterKey" }, { S.quick and " close " or " hide ", "DeckFooter" },
   }
 end
 
@@ -236,6 +256,10 @@ end
 
 local function geometry()
   local cols, lines = vim.o.columns, vim.o.lines
+  if S.quick then -- its own small window: fill it
+    -- two bordered boxes stacked; no statusline or cmdline in this window
+    return { w = cols - 2, th = lines - 3 - 4, ih = 3, col = 0, row = 0 }
+  end
   local w = math.min(96, math.max(50, math.floor(cols * 0.42)))
   local h = math.max(12, lines - 6)
   local col = cols - w - 3
@@ -300,6 +324,9 @@ local function open_windows()
 end
 
 function M.hide()
+  if S.quick then
+    return vim.cmd("qa!")
+  end
   for _, w in ipairs({ S.iwin, S.win }) do
     if w and vim.api.nvim_win_is_valid(w) then
       vim.api.nvim_win_close(w, true)
@@ -318,9 +345,17 @@ local function cmd(prompt)
   local c = {
     "claude", "-p", "--model", M.model,
     "--output-format", "stream-json", "--verbose", "--include-partial-messages",
-    "--tools", "", "--strict-mcp-config", "--setting-sources", "", "--disable-slash-commands",
-    "--system-prompt", SYSTEM,
+    "--strict-mcp-config", "--setting-sources", "", "--disable-slash-commands",
   }
+  if S.quick then -- read-only tools: the screenshot and ~/.config
+    vim.list_extend(c, {
+      "--tools", "Read,Grep,Glob", "--allowedTools", "Read,Grep,Glob",
+      "--add-dir", vim.fn.expand("~/.config"),
+      "--system-prompt", QUICK:format(S.quick.shot),
+    })
+  else
+    vim.list_extend(c, { "--tools", "", "--system-prompt", SYSTEM })
+  end
   if S.session then
     vim.list_extend(c, { "--resume", S.session })
   end
@@ -351,6 +386,20 @@ function M._event(ev)
     if d and d.type == "text_delta" then
       stream(d.text)
     end
+  elseif ev.type == "assistant" and ev.message then
+    -- a tool call (Quick ask reads the screenshot or a dotfile): say so, dimmed
+    for _, c in ipairs(ev.message.content or {}) do
+      if c.type == "tool_use" then
+        local input = c.input or {}
+        local what
+        if input.file_path then
+          what = S.quick and input.file_path == S.quick.shot and "the screen" or vim.fn.fnamemodify(input.file_path, ":~")
+        else
+          what = ("`%s`"):format(input.pattern or input.path or "")
+        end
+        stream(("*󰈈 %s %s*\n\n"):format(({ Read = "looked at", Grep = "searched", Glob = "listed" })[c.name] or c.name, what))
+      end
+    end
   elseif ev.type == "result" then
     S.session = ev.session_id or S.session
     if ev.is_error then
@@ -370,7 +419,7 @@ function M.send(question, opts)
     return
   end
   buffers()
-  local ctx = opts.no_context and nil or M.context(S.origin, opts.range)
+  local ctx = (opts.no_context or S.quick) and nil or M.context(S.origin, opts.range)
   local row = append({ "", "you", "" })
   label(row + 1, " you", "AskYou")
   if ctx then
@@ -570,6 +619,15 @@ function M.explain()
   end
   M.open({ question = ("Explain this diagnostic on line %d in plain words and show the smallest fix:\n`%s`"):format(
     best.lnum + 1, (best.message:gsub("\n", " "))) })
+end
+
+-- Super+A (quick-ask script): this nvim is only the chat, in its own window
+function M.quick(shot)
+  S.quick = { shot = shot }
+  vim.o.laststatus, vim.o.cmdheight, vim.o.showtabline, vim.o.ruler = 0, 0, 0, false
+  M.setup()
+  open_windows()
+  vim.cmd.startinsert({ bang = true })
 end
 
 function M.setup()

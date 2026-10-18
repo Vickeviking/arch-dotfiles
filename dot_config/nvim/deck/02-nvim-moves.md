@@ -134,6 +134,7 @@ Examples: `ci"` change the string, `da(` delete a call's arguments with the pare
 | `Space Space` | **Ask** Claude (Haiku) in a float; the function under the cursor, its errors, and X-ray (when stopped) come along |
 | `Space Space` in visual | ask about just the selected lines |
 | `Space ae` | explain the diagnostic under the cursor, with the smallest fix |
+| `Super A` (anywhere) | **Quick ask**: a small chat bottom-left with a screenshot attached; Claude may read `~/.config` (never change it). `Super A` again or `Esc Esc` closes. The desktop overview moved to `Super O` |
 | `:Ask question` | ask from the command line |
 | in Ask | `⏎` send · `⇧⏎` new line · `Tab` to the answers · `y` yank code · `C-n` new chat · `C-c` stop · `q` hide |
 | `Space cr` | **run this file**: Python, TS/JS, Go, C, C++, Java, Lua, shell (Rust: `cargo run`) · `q` closes the output |

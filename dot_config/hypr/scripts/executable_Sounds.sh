@@ -3,7 +3,7 @@
 # This script is used to play system sounds.
 # Script is used by Volume.Sh and ScreenShots.sh 
 
-theme="freedesktop" # Set the theme for the system sounds.
+theme="desk" # Set the theme for the system sounds. (desk: ~/.local/share/sounds/desk, 2026-10-18)
 mute=false          # Set to true to mute the system sounds.
 
 # Mute individual sounds here.

@@ -1,7 +1,7 @@
 return {
 	-- Replaces rust-tools.nvim
 	"mrcjkb/rustaceanvim",
-	version = "^6", -- recommended to pin major
+	version = "^9", -- pinned major; v9 needs nvim 0.12
 	ft = { "rust" }, -- lazy load on rust filetype
 	priority = 1000, -- Load before other LSP plugins
 	dependencies = {
@@ -154,7 +154,7 @@ return {
 
 			local params = vim.lsp.util.make_position_params(0, client.offset_encoding or "utf-8")
 			local prev_view = vim.fn.winsaveview()
-			client.request("rust-analyzer/expandMacro", params, function(err, result)
+			client:request("rust-analyzer/expandMacro", params, function(err, result)
 				if err or not result or not result.expansion then
 					vim.notify("No macro expansion available", vim.log.levels.INFO)
 					return

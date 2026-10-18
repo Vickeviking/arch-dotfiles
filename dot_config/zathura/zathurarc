@@ -1,0 +1,8 @@
+set adjust-open width          # scale pages to fill the window width
+set page-padding 1             # reduce gaps between page and window
+set zoom-min 110               # optional: enforce a larger minimum zoom
+set zoom-max 200               # optional: allow zooming in further
+
+
+# colors from desk-theme (regenerated on every theme switch)
+include desk-colors

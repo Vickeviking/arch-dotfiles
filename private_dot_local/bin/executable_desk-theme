@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""desk-theme: one palette for Hyprland, waybar, rofi, swaync, hyprlock, kitty and Claude Code.
+"""desk-theme: one palette for Hyprland, waybar, rofi, swaync, hyprlock, kitty, Claude Code,
+GTK 3/4, Qt 5/6, starship, btop and cava.
 
   desk-theme              list themes (* = active)
   desk-theme <name>       switch to a palette from ~/.config/themes/palettes/<name>.json
@@ -136,6 +137,9 @@ def render(name, p):
 
     render_chrome(name, p, c)
     render_surfingkeys(c)
+    render_desktop(c, a, hdr)
+    render_icons(c)
+    render_apps(c, a, hdr)
     write("name", name + "\n")
 
 
@@ -201,6 +205,294 @@ def render_surfingkeys(c):
     write("surfingkeys.js", "\n".join(js) + "\n")
 
 
+
+# --- the rest of the desktop: GTK, Qt, starship, btop, cava ------------------
+
+def render_desktop(c, a, hdr):
+    """GTK 3/4 (adw-gtk3 + libadwaita named colors), Qt 5/6 (qt5ct/qt6ct palette,
+    Fusion), starship, btop and cava, all from the same palette."""
+    surface, panel, border, text, muted = c["surface"], c["panel"], c["border"], c["text"], c["muted"]
+    accent, accent2, ok, alert = c["accent"], c["accent2"], c["ok"], c["alert"]
+    warn = a[11]
+
+    gtk = {
+        "accent_color": accent, "accent_bg_color": accent, "accent_fg_color": surface,
+        "destructive_color": alert, "destructive_bg_color": alert, "destructive_fg_color": surface,
+        "success_color": ok, "success_bg_color": ok, "success_fg_color": surface,
+        "warning_color": warn, "warning_bg_color": warn, "warning_fg_color": surface,
+        "error_color": alert, "error_bg_color": alert, "error_fg_color": surface,
+        "window_bg_color": panel, "window_fg_color": text,
+        "view_bg_color": surface, "view_fg_color": text,
+        "headerbar_bg_color": mix(panel, surface, .5), "headerbar_fg_color": text,
+        "headerbar_border_color": border, "headerbar_backdrop_color": panel,
+        "headerbar_shade_color": "rgba(0, 0, 0, 0.36)",
+        "sidebar_bg_color": mix(surface, panel, .6), "sidebar_fg_color": text,
+        "sidebar_backdrop_color": mix(surface, panel, .6), "sidebar_shade_color": "rgba(0, 0, 0, 0.25)",
+        "secondary_sidebar_bg_color": surface, "secondary_sidebar_fg_color": text,
+        "card_bg_color": mix(text, panel, .04), "card_fg_color": text, "card_shade_color": "rgba(0, 0, 0, 0.36)",
+        "dialog_bg_color": panel, "dialog_fg_color": text,
+        "popover_bg_color": panel, "popover_fg_color": text, "popover_shade_color": "rgba(0, 0, 0, 0.25)",
+        "thumbnail_bg_color": panel, "thumbnail_fg_color": text,
+        "shade_color": "rgba(0, 0, 0, 0.36)", "scrollbar_outline_color": "rgba(0, 0, 0, 0.5)",
+    }
+    css = f"/* {hdr} */\n" + "".join(f"@define-color {k} {v};\n" for k, v in gtk.items())
+    for d in ("gtk-3.0", "gtk-4.0"):
+        path = os.path.join(HOME, ".config", d)
+        os.makedirs(path, exist_ok=True)
+        _write_abs(os.path.join(path, "gtk.css"), css)
+
+    # Qt: WindowText Button Light Midlight Dark Mid Text BrightText ButtonText Base
+    # Window Shadow Highlight HighlightedText Link LinkVisited AlternateBase NoRole
+    # ToolTipBase ToolTipText PlaceholderText Accent
+    def qt(*cols):
+        return ", ".join("#ff" + x.lstrip("#").lower() for x in cols)
+    btn = mix(text, panel, .06)
+    active = qt(text, btn, mix(text, panel, .18), mix(text, panel, .12), surface, border, text, "#ffffff",
+                text, surface, panel, "#000000", accent, surface, accent2, mix(accent2, text, .6),
+                mix(text, surface, .03), panel, panel, text, muted, accent)
+    disabled = qt(muted, btn, mix(text, panel, .18), mix(text, panel, .12), surface, border, muted, "#ffffff",
+                  muted, surface, panel, "#000000", border, muted, muted, muted,
+                  mix(text, surface, .03), panel, panel, muted, muted, border)
+    scheme = f"# {hdr}\n[ColorScheme]\nactive_colors={active}\ndisabled_colors={disabled}\ninactive_colors={active}\n"
+    for d in ("qt5ct", "qt6ct"):
+        base = os.path.join(HOME, ".config", d)
+        os.makedirs(os.path.join(base, "colors"), exist_ok=True)
+        _write_abs(os.path.join(base, "colors", "desk.conf"), scheme)
+        conf = os.path.join(base, f"{d}.conf")
+        if os.path.exists(conf):
+            t = open(conf).read()
+            t = re.sub(r"(?m)^color_scheme_path=.*$", f"color_scheme_path={base}/colors/desk.conf", t)
+            t = re.sub(r"(?m)^custom_palette=.*$", "custom_palette=true", t)
+            t = re.sub(r"(?m)^style=.*$", "style=Fusion", t)
+            t = re.sub(r"(?m)^icon_theme=.*$", "icon_theme=Desk", t)
+            _write_abs(conf, t)
+
+    # starship: used by .zshrc when starship is installed
+    star = f"""# {hdr}
+add_newline = false
+format = "$directory$git_branch$git_status$rust$python$nodejs$golang$c$cmd_duration$line_break$character"
+palette = "desk"
+
+[palettes.desk]
+surface = "{surface}"
+panel = "{panel}"
+text = "{text}"
+muted = "{muted}"
+accent = "{accent}"
+accent2 = "{accent2}"
+ok = "{ok}"
+alert = "{alert}"
+
+[directory]
+style = "bold accent"
+truncation_length = 3
+truncate_to_repo = true
+read_only = " 󰌾"
+
+[git_branch]
+symbol = " "
+style = "accent2"
+format = "[$symbol$branch]($style) "
+
+[git_status]
+style = "muted"
+format = "[$all_status$ahead_behind]($style) "
+
+[rust]
+symbol = " "
+style = "accent"
+format = "[$symbol$version]($style) "
+
+[python]
+symbol = " "
+style = "accent2"
+format = "[$symbol$version]($style) "
+
+[nodejs]
+symbol = " "
+style = "ok"
+format = "[$symbol$version]($style) "
+
+[golang]
+symbol = " "
+style = "accent2"
+format = "[$symbol$version]($style) "
+
+[c]
+symbol = " "
+style = "accent2"
+format = "[$symbol$version]($style) "
+
+[cmd_duration]
+min_time = 2000
+style = "muted"
+format = "[󱎫 $duration]($style) "
+
+[character]
+success_symbol = "[❯](bold accent)"
+error_symbol = "[❯](bold alert)"
+vimcmd_symbol = "[❮](bold ok)"
+"""
+    _write_abs(os.path.join(HOME, ".config/starship.toml"), star)
+
+    # btop
+    bt = {
+        "main_bg": "", "main_fg": text, "title": text, "hi_fg": accent,
+        "selected_bg": mix(accent, surface, .25), "selected_fg": text, "inactive_fg": muted,
+        "graph_text": muted, "meter_bg": border, "proc_misc": accent2,
+        "cpu_box": border, "mem_box": border, "net_box": border, "proc_box": border, "div_line": border,
+        "temp_start": accent2, "temp_mid": warn, "temp_end": alert,
+        "cpu_start": accent2, "cpu_mid": accent, "cpu_end": alert,
+        "free_start": mix(ok, surface, .5), "free_mid": ok, "free_end": ok,
+        "cached_start": mix(accent2, surface, .5), "cached_mid": accent2, "cached_end": accent2,
+        "available_start": mix(ok, surface, .5), "available_mid": ok, "available_end": ok,
+        "used_start": mix(accent, surface, .5), "used_mid": accent, "used_end": alert,
+        "download_start": mix(accent2, surface, .4), "download_mid": accent2, "download_end": text,
+        "upload_start": mix(accent, surface, .4), "upload_mid": accent, "upload_end": text,
+        "process_start": accent2, "process_mid": accent, "process_end": alert,
+    }
+    bdir = os.path.join(HOME, ".config/btop/themes")
+    os.makedirs(bdir, exist_ok=True)
+    _write_abs(os.path.join(bdir, "desk.theme"),
+               f"# {hdr}\n" + "".join(f'theme[{k}]="{v}"\n' for k, v in bt.items()))
+    bconf = os.path.join(HOME, ".config/btop/btop.conf")
+    t = open(bconf).read() if os.path.exists(bconf) else ""
+    for key, val in (("color_theme", '"desk"'), ("theme_background", "false"), ("truecolor", "true"),
+                     ("rounded_corners", "true"), ("vim_keys", "true")):
+        if re.search(rf"(?m)^{key}\s*=", t):
+            t = re.sub(rf"(?m)^{key}\s*=.*$", f"{key} = {val}", t)
+        else:
+            t += f"{key} = {val}\n"
+    _write_abs(bconf, t)
+
+    # cava: an 8-step gradient from the accents (bars go low → high)
+    cconf = os.path.join(HOME, ".config/cava/config")
+    if os.path.exists(cconf):
+        steps = [mix(accent2, surface, .45), accent2, mix(accent, accent2, .3), mix(accent, accent2, .6),
+                 accent, mix(accent, a[11], .5), a[11], mix(a[11], text, .5)]
+        t = open(cconf).read()
+        for i, col in enumerate(steps, 1):
+            # only the active lines; the commented examples stay comments
+            t = re.sub(rf"(?m)^gradient_color_{i}\s*=.*$", f"gradient_color_{i} = '{col}'", t)
+        _write_abs(cconf, t)
+
+
+
+
+def render_apps(c, a, hdr):
+    """zathura now; Spotify (spicetify), Discord (Vesktop) and Obsidian themes are
+    written ahead of time so they apply as soon as those tools are in place."""
+    surface, panel, border, text, muted = c["surface"], c["panel"], c["border"], c["text"], c["muted"]
+    accent, accent2, ok, alert = c["accent"], c["accent2"], c["ok"], c["alert"]
+
+    zdir = os.path.join(HOME, ".config/zathura")
+    os.makedirs(zdir, exist_ok=True)
+    _write_abs(os.path.join(zdir, "desk-colors"), "\n".join([
+        f"# {hdr}",
+        f'set default-bg "{surface}"', f'set default-fg "{text}"',
+        f'set statusbar-bg "{panel}"', f'set statusbar-fg "{muted}"',
+        f'set inputbar-bg "{panel}"', f'set inputbar-fg "{text}"',
+        f'set notification-bg "{panel}"', f'set notification-fg "{text}"',
+        f'set notification-error-bg "{alert}"', f'set notification-error-fg "{surface}"',
+        f'set notification-warning-bg "{a[11]}"', f'set notification-warning-fg "{surface}"',
+        f'set highlight-color "rgba({",".join(str(v) for v in rgb(accent))},0.35)"',
+        f'set highlight-active-color "rgba({",".join(str(v) for v in rgb(accent2))},0.45)"',
+        f'set completion-bg "{panel}"', f'set completion-fg "{text}"',
+        f'set completion-highlight-bg "{accent}"', f'set completion-highlight-fg "{surface}"',
+        f'set index-bg "{surface}"', f'set index-fg "{text}"',
+        f'set index-active-bg "{accent}"', f'set index-active-fg "{surface}"',
+        f'set recolor-lightcolor "{surface}"', f'set recolor-darkcolor "{text}"',
+        "set recolor-keephue true", ""]))
+
+    # Spotify via spicetify: ~/.config/spicetify/Themes/Desk (spicetify config current_theme Desk)
+    h = lambda x: x.lstrip("#").lower()
+    sdir = os.path.join(HOME, ".config/spicetify/Themes/Desk")
+    os.makedirs(sdir, exist_ok=True)
+    _write_abs(os.path.join(sdir, "color.ini"), "\n".join([
+        f"; {hdr}", "[desk]",
+        f"text = {h(text)}", f"subtext = {h(muted)}", f"main = {h(surface)}", f"sidebar = {h(panel)}",
+        f"player = {h(panel)}", f"card = {h(mix(text, panel, .05))}", f"shadow = 000000",
+        f"selected-row = {h(text)}", f"button = {h(accent)}", f"button-active = {h(mix(accent, '#ffffff', .85))}",
+        f"button-disabled = {h(border)}", f"tab-active = {h(mix(accent, surface, .25))}",
+        f"notification = {h(accent2)}", f"notification-error = {h(alert)}", f"misc = {h(muted)}", ""]))
+    _write_abs(os.path.join(sdir, "user.css"), f"/* {hdr} */\n")
+
+    # Discord via Vesktop/Vencord: a theme file (Settings → Themes → desk)
+    discord = f"""/**
+ * @name desk
+ * @description {hdr}
+ */
+.theme-dark, .theme-darker, .visual-refresh {{
+  --background-primary: {surface}; --background-secondary: {panel};
+  --background-secondary-alt: {mix(panel, surface, .5)}; --background-tertiary: {mix(surface, '#000000', .8)};
+  --background-floating: {panel}; --background-modifier-hover: {mix(text, surface, .06)};
+  --background-modifier-selected: {mix(accent, surface, .18)}; --channeltextarea-background: {panel};
+  --text-normal: {text}; --text-muted: {muted}; --header-primary: {text}; --header-secondary: {muted};
+  --interactive-normal: {muted}; --interactive-hover: {text}; --interactive-active: {text};
+  --brand-experiment: {accent}; --brand-500: {accent}; --text-link: {accent2};
+  --status-positive: {ok}; --status-danger: {alert}; --border-subtle: {border};
+}}
+"""
+    _write_abs(os.path.join(OUT, "discord.css"), discord)
+    vthemes = os.path.join(HOME, ".config/vesktop/themes")
+    if os.path.isdir(os.path.dirname(vthemes)):
+        os.makedirs(vthemes, exist_ok=True)
+        _write_abs(os.path.join(vthemes, "desk.theme.css"), discord)
+
+    # Obsidian: a CSS snippet to drop into <vault>/.obsidian/snippets/
+    _write_abs(os.path.join(OUT, "obsidian.css"), f"""/* {hdr}
+   copy to <vault>/.obsidian/snippets/desk.css, then Settings → Appearance → CSS snippets */
+.theme-dark {{
+  --background-primary: {surface}; --background-primary-alt: {mix(surface, panel, .5)};
+  --background-secondary: {panel}; --background-secondary-alt: {mix(panel, surface, .5)};
+  --background-modifier-border: {border}; --text-normal: {text}; --text-muted: {muted};
+  --text-faint: {mix(muted, surface, .6)}; --text-accent: {accent}; --interactive-accent: {accent};
+  --interactive-accent-hover: {mix(accent, '#ffffff', .85)}; --text-on-accent: {surface};
+  --color-accent: {accent}; --h1-color: {accent}; --h2-color: {accent2}; --link-color: {accent2};
+}}
+""")
+
+ICON_BASE = os.path.join(HOME, ".icons/Flat-Remix-Blue-Dark")
+ICON_OUT = os.path.join(HOME, ".local/share/icons/Desk")
+
+
+def render_icons(c):
+    """Folder icons in the accent: a small theme that inherits Flat-Remix and
+    overrides only the icons drawn in its folder blue."""
+    src = os.path.join(ICON_BASE, "places/scalable")
+    if not os.path.isdir(src):
+        return
+    dst = os.path.join(ICON_OUT, "places/scalable")
+    os.makedirs(dst, exist_ok=True)
+    front, back = c["accent"], mix(c["accent"], "#000000", .78)
+    for f in glob.glob(os.path.join(src, "*.svg")):
+        t = open(f, encoding="utf-8", errors="replace").read()
+        if "#367bf0" not in t.lower():
+            continue
+        t = re.sub("(?i)#367bf0", front, t)
+        t = re.sub("(?i)#2b62c0", back, t)
+        _write_abs(os.path.join(dst, os.path.basename(f)), t)
+    _write_abs(os.path.join(ICON_OUT, "index.theme"), "\n".join([
+        "[Icon Theme]", "Name=Desk", "Comment=Flat-Remix with folders in the desk-theme accent (generated)",
+        "Inherits=Flat-Remix-Blue-Dark,breeze-dark,hicolor", "Directories=places/scalable", "",
+        "[places/scalable]", "Context=Places", "Size=48", "MinSize=8", "MaxSize=512", "Type=Scalable", ""]))
+
+def _write_abs(path, text):
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def apply_gtk():
+    """GTK picks up a new gtk.css when the theme name changes: flip it once."""
+    quiet("gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", "Adwaita")
+    quiet("gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", "adw-gtk3-dark")
+    quiet("gsettings", "set", "org.gnome.desktop.interface", "color-scheme", "prefer-dark")
+    if os.path.isdir(ICON_OUT):   # same flip for the recolored icons
+        quiet("gsettings", "set", "org.gnome.desktop.interface", "icon-theme", "Flat-Remix-Blue-Dark")
+        quiet("gsettings", "set", "org.gnome.desktop.interface", "icon-theme", "Desk")
+
 def write(fname, text):
     tmp = os.path.join(OUT, fname + ".tmp")
     with open(tmp, "w") as f:
@@ -220,6 +512,8 @@ def reload_apps():
     quiet("pkill", "-SIGUSR2", "-x", "waybar")      # waybar reloads style + config
     quiet("pkill", "-SIGUSR1", "-x", "kitty")       # kitty re-reads kitty.conf
     quiet("swaync-client", "--reload-css")
+    apply_gtk()
+    quiet("pkill", "-USR1", "-x", "cava")           # cava re-reads its config
     # every running nvim listens on $XDG_RUNTIME_DIR/nvim.<pid>.0: recolor them in place
     run_dir = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
     for sock in glob.glob(os.path.join(run_dir, "nvim.*.0")):

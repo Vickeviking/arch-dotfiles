@@ -1,0 +1,11 @@
+[Unit]
+Description=Desk sounds for USB and charger plug/unplug
+PartOf=graphical-session.target
+After=graphical-session.target pipewire.service
+
+[Service]
+ExecStart=%h/.local/bin/desk-plug-sounds
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target

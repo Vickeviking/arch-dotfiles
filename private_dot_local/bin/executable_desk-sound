@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# desk-sound <event>: play one sound from the desk theme (~/.local/share/sounds/desk).
+#   events: message-new-instant device-added device-removed power-plug power-unplug
+#           audio-volume-change screen-capture dialog-error bell
+# Silent while swaync's Do Not Disturb is on (except errors), or when
+# ~/.config/desk/sounds-off exists (`touch` it to mute everything).
+event=${1:-bell}
+[ -e "$HOME/.config/desk/sounds-off" ] && exit 0
+if [ "$event" != dialog-error ] && [ "$(swaync-client -D 2>/dev/null)" = true ]; then
+	exit 0
+fi
+file="$HOME/.local/share/sounds/desk/stereo/$event.wav"
+[ -f "$file" ] || exit 0
+exec pw-play --volume 0.6 "$file" >/dev/null 2>&1

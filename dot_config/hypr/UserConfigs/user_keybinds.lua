@@ -51,7 +51,8 @@ local unbind = user_keybinds_helper.unbind
 bind("SUPER", "D", exec_cmd("pkill rofi || true && rofi -show drun -modi drun, filebrowser, run, window"))
 bind("SUPER", "B", exec_cmd("google-chrome-stable"), { description = "Chrome" }) -- was firefox-hybrid (2026-10-16)
 bind("SUPER SHIFT", "T", exec_cmd("pkill rofi || true && $HOME/.local/bin/desk-theme --rofi"), { description = "Desk theme picker" })
-bind("SUPER", "A", dispatch("global", "quickshell:overviewToggle"))
+bind("SUPER", "A", exec_cmd("$HOME/.local/bin/quick-ask"), { description = "Quick ask: Claude about the screen" }) -- 2026-10-18, was the overview
+bind("SUPER", "O", dispatch("global", "quickshell:overviewToggle"), { description = "Desktop overview" })
 bind("SUPER", "Return", exec_cmd("kitty"))
 bind("SUPER", "E", exec_cmd("thunar"))
 bind("SUPER", "H", exec_cmd("$HOME/.config/hypr/scripts/hypr_sheet.py"), { description = "Cheat sheet, Ask and AI photos" })

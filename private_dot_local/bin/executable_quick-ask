@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# quick-ask (Super+A): ask Claude about whatever is on screen, from anywhere.
+# Takes a silent screenshot of the focused monitor, then opens a small
+# floating window bottom-left with nvim's Ask chat (lua/vango/ask.lua) and the
+# screenshot attached. Claude may read the screenshot and ~/.config, never
+# change anything. Pressing Super+A again closes it.
+set -euo pipefail
+
+class=quickask
+pid=$(hyprctl clients -j | python3 -c 'import json,sys; print(next((str(c["pid"]) for c in json.load(sys.stdin) if c["class"] == "quickask"), ""))')
+if [ -n "$pid" ]; then
+	kill "$pid"
+	exit 0
+fi
+
+dir="${XDG_CACHE_HOME:-$HOME/.cache}/nvim/ask"
+mkdir -p "$dir"
+shot="$dir/screen-$(date +%Y%m%d-%H%M%S).png"
+monitor=$(hyprctl monitors -j | python3 -c 'import json,sys; print(next(m["name"] for m in json.load(sys.stdin) if m["focused"]))')
+grim -o "$monitor" "$shot"
+
+# keep the last ten screenshots
+ls -1t "$dir"/screen-*.png 2>/dev/null | tail -n +11 | xargs -r rm -f --
+
+exec kitty --class "$class" --title "Ask" \
+	-o remember_window_size=no -o initial_window_width=86c -o initial_window_height=34c \
+	-e nvim -c "lua require('vango.ask').quick([[$shot]])"

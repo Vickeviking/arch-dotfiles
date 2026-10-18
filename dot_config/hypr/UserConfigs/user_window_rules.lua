@@ -1102,3 +1102,14 @@ apply_window_rule({
   match = { class = ".*" },
   suppress_event = "maximize",
 })
+
+-- Quick ask (Super+A, ~/.local/bin/quick-ask): a small chat floating bottom-left,
+-- on top of everything and on every workspace until closed
+apply_window_rule({
+  name = "user-quickask",
+  match = { class = "^(quickask)$" },
+  float = true,
+  pin = true,
+  size = "(monitor_w*0.34) (monitor_h*0.62)",
+  move = "(monitor_w*0.012) (monitor_h*0.35)", -- 0.35 = 1 - 0.62 height - 0.03 margin
+})

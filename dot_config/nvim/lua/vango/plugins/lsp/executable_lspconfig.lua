@@ -100,8 +100,12 @@ return {
 				map("gi", "<cmd>Telescope lsp_implementations<cr>", "Go to implementation")
 				map("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
 				map("<leader>ca", vim.lsp.buf.code_action, "Code actions")
-				map("<C-j>", vim.diagnostic.goto_next, "Next diagnostic")
-				map("<C-k>", vim.diagnostic.goto_prev, "Prev diagnostic")
+				map("<C-j>", function()
+					vim.diagnostic.jump({ count = 1, float = true })
+				end, "Next diagnostic")
+				map("<C-k>", function()
+					vim.diagnostic.jump({ count = -1, float = true })
+				end, "Prev diagnostic")
 
 				-- every language gets what Rust has: inlay hints (types, parameter
 				-- names) on by default, a toggle, and a bordered K hover
