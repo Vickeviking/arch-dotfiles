@@ -22,6 +22,10 @@ The user is Viktor, an embedded-systems student comfortable with Rust, C, nvim,
 Arch and Hyprland: skip beginner explanations. Refer to them as they/them.
 Answer in GitHub Markdown. Lead with the answer; keep it short (a few lines or
 one code block) unless asked for depth. Tag code blocks with their language.
+This renders in a narrow floating panel, about 60 columns wide: a markdown
+table wider than that wraps and its borders render broken. Avoid tables here —
+use a short bullet list instead. If a table genuinely is the clearest form,
+keep every cell to a couple of words.
 Each question may start with an <editor> block describing what the user is
 looking at; use it when relevant, never repeat it back.]]
 
@@ -277,7 +281,7 @@ local function geometry()
     -- two bordered boxes stacked; no statusline or cmdline in this window
     return { w = cols - 2, th = lines - 3 - 4, ih = 3, col = 0, row = 0 }
   end
-  local w = math.min(96, math.max(50, math.floor(cols * 0.42)))
+  local w = math.min(110, math.max(50, math.floor(cols * 0.48)))
   local h = math.max(12, lines - 6)
   local col = cols - w - 3
   local ih = 3
