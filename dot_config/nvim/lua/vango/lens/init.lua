@@ -500,7 +500,7 @@ end
 local function run_lens_sizes(buf, quiet, on_done)
   local _, root = sizes_path(buf)
   if not root or vim.fn.executable("lens-sizes") == 0 then
-    state.sizes_status = "lens-sizes isn't installed (cargo install --path ~/dev/project/genomlysning/crates/lens-sizes)"
+    state.sizes_status = "lens-sizes isn't installed (cargo install --path ~/dev/project/arch-extensions/genomlysning/crates/lens-sizes)"
     return on_done and on_done(false)
   end
   if not quiet then

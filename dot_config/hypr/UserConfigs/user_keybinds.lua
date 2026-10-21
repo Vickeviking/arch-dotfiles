@@ -97,6 +97,6 @@ bind("", "KP_End", exec_cmd("kitty --class cheats-select -e ~/.local/bin/cheat_s
 -- bara körde Float-all-Windows.sh (ingen märkbar effekt).
 unbind("SUPER", "SPACE")
 unbind("SUPER ALT", "SPACE")
--- Watchtower (2026-10-16) replaces Flywheel; the repo stays in ~/dev/project/Arch-flywheel.
+-- Watchtower (2026-10-16) replaces Flywheel; the repo stays in ~/dev/project/arch-extensions/Arch-flywheel.
 bind("SUPER", "SPACE", exec_cmd("$HOME/.local/bin/watchtower"), { description = "Watchtower hub" })
 bind("SUPER ALT", "SPACE", dispatch("togglefloating", ""), { description = "Toggle floating" })
