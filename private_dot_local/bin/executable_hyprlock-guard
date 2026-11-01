@@ -1,0 +1,16 @@
+#!/bin/sh
+# hyprlock-guard: run hyprlock, and if it dies from a signal (a crash, as on
+# resume from suspend 11/10 and 21/10), start a new one. With Hyprland's
+# misc:allow_session_lock_restore the new one takes over the still-held lock,
+# so you get a password prompt instead of the "lockscreen died" screen.
+# A normal unlock exits 0 and ends the loop. Gives up after 5 crashes in a row.
+tries=0
+while :; do
+	hyprlock "$@"
+	status=$?
+	[ "$status" -le 128 ] && exit "$status"
+	tries=$((tries + 1))
+	logger -t hyprlock-guard "hyprlock died (status $status), restart $tries"
+	[ "$tries" -ge 5 ] && exit "$status"
+	sleep 1
+done
