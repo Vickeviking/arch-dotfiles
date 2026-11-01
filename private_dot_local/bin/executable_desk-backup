@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# desk-backup: nightly restic backup of this machine to the other one, over
+# desk-backup: daily restic backup of this machine to the other one, over
 # Tailscale (sftp). Run by the desk-backup.timer user unit once Viktor has set
 # it up (see ~/.config/desk-backup/README.md).
 #
@@ -42,8 +42,15 @@ backup) ;;
 *) echo "desk-backup: unknown command $1" >&2; exit 2 ;;
 esac
 
+# The timer fires every hour; one good backup a day is the goal. A fixed 03:30
+# slot missed every night 19/10-1/11 because the other machine was asleep.
+stamp="$HOME/.local/state/desk-backup/last-success"
+if [ -z "${DESK_BACKUP_FORCE:-}" ] && [ -f "$stamp" ] &&
+	[ $(($(date +%s) - $(stat -c %Y "$stamp"))) -lt $((20 * 3600)) ]; then
+	exit 0
+fi
 if ! ssh -o ConnectTimeout=8 -o BatchMode=yes "vango@$target" true 2>/dev/null; then
-	echo "desk-backup: $target doesn't answer; skipping tonight" >&2
+	echo "desk-backup: $target doesn't answer; trying again next hour" >&2
 	exit 0
 fi
 
@@ -62,3 +69,4 @@ for p in "${paths[@]}"; do [ -e "$p" ] && existing+=("$p"); done
 restic backup --exclude-file "$conf/excludes" --exclude-caches --one-file-system \
 	--tag nightly "${existing[@]}"
 restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
+mkdir -p "$(dirname "$stamp")" && touch "$stamp"

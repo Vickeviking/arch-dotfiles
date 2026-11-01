@@ -1,9 +1,9 @@
 [Unit]
-Description=Run desk-backup every night
+Description=Try desk-backup every hour (it backs up once a day, when the other machine is awake)
 
 [Timer]
-OnCalendar=*-*-* 03:30
-RandomizedDelaySec=20min
+OnCalendar=hourly
+RandomizedDelaySec=5min
 Persistent=true
 
 [Install]
